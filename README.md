@@ -20,6 +20,8 @@
 
 ## 👋 Frontend SDK
 
+[![NPM Version](https://img.shields.io/npm/v/@caido/sdk-frontend?style=for-the-badge)](https://www.npmjs.com/package/@caido/sdk-frontend)
+
 This is repository for the Caido frontend SDK.
 
 The design pattern is heavily influenced by the VSCode SDK and works mainly with the `Command` concept.
