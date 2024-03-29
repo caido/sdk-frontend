@@ -28,7 +28,7 @@ export type API = {
     registerItem: (
       name: string,
       path: string,
-      options?: SidebarItemOptions
+      options?: SidebarItemOptions,
     ) => SidebarItem;
   };
 };
