@@ -27,4 +27,4 @@ jobs:
       - name: Release
         env:
           NPM_TOKEN: ${{ secrets.NPM_BOT_TOKEN }}
-        run: pnpm publish --access public
+        run: pnpm -r publish --access public
