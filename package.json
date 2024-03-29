@@ -1,8 +1,13 @@
 {
-  "name": "sdk-frontend",
+  "name": "@caido/sdk-frontend",
   "version": "0.0.1",
   "description": "Typing for the Caido Frontend SDK",
   "author": "Caido Labs Inc. <dev@caido.io>",
   "license": "MIT",
-  "types": "./src/index.d.ts"
+  "types": "./src/index.d.ts",
+  "main": "./src/index.js",
+  "module": "./src/index.js",
+  "files": [
+    "src/*"
+  ]
 }
