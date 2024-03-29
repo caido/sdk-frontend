@@ -6,4 +6,6 @@ declare global {
   }
 }
 
-export { API };
+declare const Caido: API;
+
+export { Caido };
