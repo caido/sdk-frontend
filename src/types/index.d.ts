@@ -1,7 +1,10 @@
+import type { Sdk } from "./__generated__/graphql";
 import type { Commands } from "./commands";
 import type { Menu } from "./menu";
+import type { Navigation } from "./navigation";
 import type { Scopes } from "./scopes";
 import type { UI } from "./ui";
+import type { Window } from "./window";
 
 export type { CommandContext } from "./commands";
 
@@ -10,11 +13,8 @@ export type API = {
   scopes: Scopes;
   commands: Commands;
   menu: Menu;
-
-  navigation: {
-    goTo: (path: string) => void;
-    addPage: (path: string, options: PageOptions) => void;
-  };
+  navigation: Navigation;
+  window: Window;
 
   shortcuts: {
     register: (commandId: string, keys: string[]) => void;
@@ -31,11 +31,8 @@ export type API = {
       options?: SidebarItemOptions,
     ) => SidebarItem;
   };
-};
 
-type PageOptions = {
-  body: HTMLElement;
-  topbar?: HTMLElement;
+  graphql: Sdk;
 };
 
 type SidebarItemOptions = {

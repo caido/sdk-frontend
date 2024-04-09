@@ -1,13 +1,18 @@
-type MenuId = "RequestRow";
-
 export type Menu = {
-  registerItem: (
-    menuId: MenuId,
-    commandId: string,
-    options?: MenuOptions,
-  ) => void;
+  registerItem: (item: MenuItem) => void;
 };
 
-type MenuOptions = {
+type MenuItem = RequestRowMenuItem | SettingsMenuItem;
+
+type RequestRowMenuItem = {
+  type: "RequestRow";
+  commandId: string;
+  leadingIcon?: string;
+};
+
+type SettingsMenuItem = {
+  type: "Settings";
+  label: string;
+  path: string;
   leadingIcon?: string;
 };

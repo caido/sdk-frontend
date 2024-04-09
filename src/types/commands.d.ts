@@ -15,14 +15,14 @@ type CommandContextBase = {
 
 type CommandContextRequestRow = {
   type: "RequestRowContext";
-  request: {
+  requests: {
     id: string;
     host: string;
     port: number;
     path: string;
     query: string;
     isTls: boolean;
-  };
+  }[];
 };
 
 export type CommandContext = CommandContextBase | CommandContextRequestRow;
