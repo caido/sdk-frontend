@@ -1,3 +1,7 @@
+type JSONPrimitive = string | number | boolean | null | undefined;
+type JSONValue = JSONPrimitive | JSONValue[] | {
+    [key: string]: JSONValue;
+};
 export type Maybe<T> = T | undefined | null;
 export type InputMaybe<T> = T | undefined | null;
 export type Exact<T extends {
@@ -71,12 +75,12 @@ export type Scalars = {
     };
     /** A scalar that can represent any JSON value. */
     JSON: {
-        input: Record<string, unknown>;
-        output: Record<string, unknown>;
+        input: JSONValue;
+        output: JSONValue;
     };
     JsonObject: {
-        input: Record<string, unknown>;
-        output: Record<string, unknown>;
+        input: JSONValue;
+        output: JSONValue;
     };
     Port: {
         input: number;
@@ -317,28 +321,26 @@ export type AutomateNullPayloadInput = {
     quantity: Scalars["Int"]["input"];
 };
 export type AutomatePayload = {
-    kind: AutomatePayloadKind;
     options: AutomatePayloadOptions;
     preprocessors: Array<AutomatePreprocessor>;
-    urlEncode: AutomateUrlEncodeOptions;
 };
 export type AutomatePayloadInput = {
-    kind: AutomatePayloadKind;
     options: AutomatePayloadOptionsInput;
     preprocessors: Array<AutomatePreprocessorInput>;
-    urlEncode: AutomateUrlEncodeOptionsInput;
 };
-export declare const AutomatePayloadKind: {
-    readonly HostedFile: "HOSTED_FILE";
-    readonly Null: "NULL";
-    readonly SimpleList: "SIMPLE_LIST";
-};
-export type AutomatePayloadKind = (typeof AutomatePayloadKind)[keyof typeof AutomatePayloadKind];
 export type AutomatePayloadOptions = AutomateHostedFilePayload | AutomateNullPayload | AutomateSimpleListPayload;
 export type AutomatePayloadOptionsInput = {
-    hostedFile?: InputMaybe<AutomateHostedFilePayloadInput>;
-    null?: InputMaybe<AutomateNullPayloadInput>;
-    simpleList?: InputMaybe<AutomateSimpleListPayloadInput>;
+    hostedFile: AutomateHostedFilePayloadInput;
+    null?: never;
+    simpleList?: never;
+} | {
+    hostedFile?: never;
+    null: AutomateNullPayloadInput;
+    simpleList?: never;
+} | {
+    hostedFile?: never;
+    null?: never;
+    simpleList: AutomateSimpleListPayloadInput;
 };
 export declare const AutomatePayloadStrategy: {
     readonly All: "ALL";
@@ -362,22 +364,32 @@ export type AutomatePrefixPreprocessorInput = {
     value: Scalars["String"]["input"];
 };
 export type AutomatePreprocessor = {
-    kind: AutomatePreprocessorKind;
     options: AutomatePreprocessorOptions;
 };
 export type AutomatePreprocessorInput = {
-    kind: AutomatePreprocessorKind;
     options: AutomatePreprocessorOptionsInput;
 };
-export declare const AutomatePreprocessorKind: {
-    readonly Prefix: "PREFIX";
-    readonly Suffix: "SUFFIX";
-};
-export type AutomatePreprocessorKind = (typeof AutomatePreprocessorKind)[keyof typeof AutomatePreprocessorKind];
-export type AutomatePreprocessorOptions = AutomatePrefixPreprocessor | AutomateSuffixPreprocessor;
+export type AutomatePreprocessorOptions = AutomatePrefixPreprocessor | AutomateSuffixPreprocessor | AutomateUrlEncodePreprocessor | AutomateWorkflowPreprocessor;
 export type AutomatePreprocessorOptionsInput = {
-    prefix?: InputMaybe<AutomatePrefixPreprocessorInput>;
-    suffix?: InputMaybe<AutomateSuffixPreprocessorInput>;
+    prefix: AutomatePrefixPreprocessorInput;
+    suffix?: never;
+    urlEncode?: never;
+    workflow?: never;
+} | {
+    prefix?: never;
+    suffix: AutomateSuffixPreprocessorInput;
+    urlEncode?: never;
+    workflow?: never;
+} | {
+    prefix?: never;
+    suffix?: never;
+    urlEncode: AutomateUrlEncodePreprocessorInput;
+    workflow?: never;
+} | {
+    prefix?: never;
+    suffix?: never;
+    urlEncode?: never;
+    workflow: AutomateWorkflowPreprocessorInput;
 };
 export type AutomateRetryOnFailureSetting = {
     backoff: Scalars["Int"]["output"];
@@ -474,15 +486,19 @@ export type AutomateTaskUserError = UserError & {
     code: Scalars["String"]["output"];
     reason: AutomateTaskErrorReason;
 };
-export type AutomateUrlEncodeOptions = {
+export type AutomateUrlEncodePreprocessor = {
     charset?: Maybe<Scalars["String"]["output"]>;
-    enabled: Scalars["Boolean"]["output"];
     nonAscii: Scalars["Boolean"]["output"];
 };
-export type AutomateUrlEncodeOptionsInput = {
+export type AutomateUrlEncodePreprocessorInput = {
     charset?: InputMaybe<Scalars["String"]["input"]>;
-    enabled: Scalars["Boolean"]["input"];
     nonAscii: Scalars["Boolean"]["input"];
+};
+export type AutomateWorkflowPreprocessor = {
+    id: Scalars["ID"]["output"];
+};
+export type AutomateWorkflowPreprocessorInput = {
+    id: Scalars["ID"]["input"];
 };
 export type Backup = {
     createdAt: Scalars["DateTime"]["output"];
@@ -745,6 +761,9 @@ export type CreatedInterceptMessagePayload = {
     messageEdge: InterceptMessageEdge;
     snapshot: Scalars["Snapshot"]["output"];
 };
+export type CreatedPluginPackagePayload = {
+    package: PluginPackage;
+};
 export type CreatedProjectPayload = {
     project: Project;
 };
@@ -967,6 +986,9 @@ export type DeletedInterceptEntryPayload = {
 export type DeletedInterceptMessagePayload = {
     deletedMessageId: Scalars["ID"]["output"];
     snapshot: Scalars["Snapshot"]["output"];
+};
+export type DeletedPluginPackagePayload = {
+    deletedPackageId: Scalars["ID"]["output"];
 };
 export type DeletedProjectPayload = {
     deletedProjectId: Scalars["ID"]["output"];
@@ -1191,6 +1213,14 @@ export type InstallBrowserPayload = {
     browser?: Maybe<Browser>;
     error?: Maybe<InstallBrowserError>;
 };
+export type InstallPluginPackageError = OtherUserError | PluginUserError;
+export type InstallPluginPackageInput = {
+    source: PluginPackageSource;
+};
+export type InstallPluginPackagePayload = {
+    error?: Maybe<InstallPluginPackageError>;
+    package?: Maybe<PluginPackage>;
+};
 export type InterceptEntry = {
     id: Scalars["ID"]["output"];
     request: Request;
@@ -1312,6 +1342,11 @@ export type InvalidRegexUserError = UserError & {
     code: Scalars["String"]["output"];
     term: Scalars["String"]["output"];
 };
+export type LocalizeWorkflowError = OtherUserError | UnknownIdUserError | WorkflowUserError;
+export type LocalizeWorkflowPayload = {
+    error?: Maybe<LocalizeWorkflowError>;
+    workflow?: Maybe<Workflow>;
+};
 export type LogoutPayload = {
     success: Scalars["Boolean"]["output"];
 };
@@ -1367,6 +1402,8 @@ export type MutationRoot = {
     forwardInterceptMessage: ForwardInterceptMessagePayload;
     globalizeWorkflow: GlobalizeWorkflowPayload;
     installBrowser: InstallBrowserPayload;
+    installPluginPackage: InstallPluginPackagePayload;
+    localizeWorkflow: LocalizeWorkflowPayload;
     logout: LogoutPayload;
     moveReplaySession: MoveReplaySessionPayload;
     moveTamperRule: MoveTamperRulePayload;
@@ -1401,13 +1438,16 @@ export type MutationRoot = {
     setGlobalConfigOnboarding: SetConfigOnboardingPayload;
     setGlobalConfigPort: SetConfigPortPayload;
     setInterceptOptions: SetInterceptOptionsPayload;
+    setPluginData: SetPluginDataPayload;
     startAuthenticationFlow: StartAuthenticationFlowPayload;
     startAutomateTask: StartAutomateTaskPayload;
     startExportRequestsTask: StartExportRequestsTaskPayload;
     startReplayTask: StartReplayTaskPayload;
     testTamperRule: TestTamperRulePayload;
     testUpstreamProxy: TestUpstreamProxyPayload;
+    togglePlugin: TogglePluginPayload;
     toggleWorkflow: ToggleWorkflowPayload;
+    uninstallPluginPackage: UninstallPluginPackagePayload;
     updateAutomateSession: UpdateAutomateSessionPayload;
     updateBrowser: UpdateBrowserPayload;
     updateFilterPreset: UpdateFilterPresetPayload;
@@ -1550,6 +1590,12 @@ export type MutationRootForwardInterceptMessageArgs = {
 export type MutationRootGlobalizeWorkflowArgs = {
     id: Scalars["ID"]["input"];
 };
+export type MutationRootInstallPluginPackageArgs = {
+    input: InstallPluginPackageInput;
+};
+export type MutationRootLocalizeWorkflowArgs = {
+    id: Scalars["ID"]["input"];
+};
 export type MutationRootMoveReplaySessionArgs = {
     collectionId: Scalars["ID"]["input"];
     id: Scalars["ID"]["input"];
@@ -1662,6 +1708,10 @@ export type MutationRootSetGlobalConfigPortArgs = {
 export type MutationRootSetInterceptOptionsArgs = {
     input: InterceptOptionsInput;
 };
+export type MutationRootSetPluginDataArgs = {
+    data: Scalars["JSON"]["input"];
+    id: Scalars["ID"]["input"];
+};
 export type MutationRootStartAutomateTaskArgs = {
     automateSessionId: Scalars["ID"]["input"];
 };
@@ -1678,8 +1728,15 @@ export type MutationRootTestTamperRuleArgs = {
 export type MutationRootTestUpstreamProxyArgs = {
     input: TestUpstreamProxyInput;
 };
+export type MutationRootTogglePluginArgs = {
+    enabled: Scalars["Boolean"]["input"];
+    id: Scalars["ID"]["input"];
+};
 export type MutationRootToggleWorkflowArgs = {
     enabled: Scalars["Boolean"]["input"];
+    id: Scalars["ID"]["input"];
+};
+export type MutationRootUninstallPluginPackageArgs = {
     id: Scalars["ID"]["input"];
 };
 export type MutationRootUpdateAutomateSessionArgs = {
@@ -1760,6 +1817,52 @@ export type PermissionDeniedUserError = UserError & {
     code: Scalars["String"]["output"];
     reason: PermissionDeniedErrorReason;
 };
+export type Plugin = {
+    enabled: Scalars["Boolean"]["output"];
+    id: Scalars["ID"]["output"];
+    manifestId: Scalars["ID"]["output"];
+    name?: Maybe<Scalars["String"]["output"]>;
+    package: PluginPackage;
+};
+export type PluginAuthor = {
+    email?: Maybe<Scalars["String"]["output"]>;
+    name?: Maybe<Scalars["String"]["output"]>;
+    url?: Maybe<Scalars["String"]["output"]>;
+};
+export declare const PluginErrorReason: {
+    readonly AlreadyInstalled: "ALREADY_INSTALLED";
+    readonly InvalidManifest: "INVALID_MANIFEST";
+    readonly InvalidPackage: "INVALID_PACKAGE";
+    readonly MissingFile: "MISSING_FILE";
+};
+export type PluginErrorReason = (typeof PluginErrorReason)[keyof typeof PluginErrorReason];
+export type PluginFrontend = Plugin & {
+    data?: Maybe<Scalars["JSON"]["output"]>;
+    enabled: Scalars["Boolean"]["output"];
+    entrypoint?: Maybe<Scalars["String"]["output"]>;
+    id: Scalars["ID"]["output"];
+    manifestId: Scalars["ID"]["output"];
+    name?: Maybe<Scalars["String"]["output"]>;
+    package: PluginPackage;
+    style?: Maybe<Scalars["String"]["output"]>;
+};
+export type PluginPackage = {
+    author?: Maybe<PluginAuthor>;
+    description?: Maybe<Scalars["String"]["output"]>;
+    id: Scalars["ID"]["output"];
+    installedAt: Scalars["DateTime"]["output"];
+    manifestId: Scalars["ID"]["output"];
+    name?: Maybe<Scalars["String"]["output"]>;
+    plugins: Array<Plugin>;
+    version: Scalars["String"]["output"];
+};
+export type PluginPackageSource = {
+    file: Scalars["Upload"]["input"];
+};
+export type PluginUserError = UserError & {
+    code: Scalars["String"]["output"];
+    reason: PluginErrorReason;
+};
 export type Project = {
     backups: Array<Backup>;
     createdAt: Scalars["DateTime"]["output"];
@@ -1817,6 +1920,7 @@ export type QueryRoot = {
     interceptMessages: InterceptMessageConnection;
     interceptOptions: InterceptOptions;
     interceptStatus: InterceptStatus;
+    pluginPackages: Array<PluginPackage>;
     projects: Array<Project>;
     replayEntry?: Maybe<ReplayEntry>;
     replaySession?: Maybe<ReplaySession>;
@@ -2382,6 +2486,11 @@ export type SetConfigPortPayload = {
 export type SetInterceptOptionsPayload = {
     options: InterceptOptions;
 };
+export type SetPluginDataError = OtherUserError | PluginUserError | UnknownIdUserError;
+export type SetPluginDataPayload = {
+    error?: Maybe<SetPluginDataError>;
+    plugin?: Maybe<Plugin>;
+};
 export declare const SitemapDescendantsDepth: {
     readonly All: "ALL";
     readonly Direct: "DIRECT";
@@ -2590,6 +2699,7 @@ export type SubscriptionRoot = {
     createdFinding: CreatedFindingPayload;
     createdInterceptEntry: CreatedInterceptEntryPayload;
     createdInterceptMessage: CreatedInterceptMessagePayload;
+    createdPluginPackage: CreatedPluginPackagePayload;
     createdProject: CreatedProjectPayload;
     createdReplaySession: CreatedReplaySessionPayload;
     createdReplaySessionCollection: CreatedReplaySessionCollectionPayload;
@@ -2614,6 +2724,7 @@ export type SubscriptionRoot = {
     deletedHostedFile: DeletedHostedFilePayload;
     deletedInterceptEntry: DeletedInterceptEntryPayload;
     deletedInterceptMessage: DeletedInterceptMessagePayload;
+    deletedPluginPackage: DeletedPluginPackagePayload;
     deletedProject: DeletedProjectPayload;
     deletedReplaySession: DeletedReplaySessionPayload;
     deletedReplaySessionCollection: DeletedReplaySessionCollectionPayload;
@@ -2644,6 +2755,7 @@ export type SubscriptionRoot = {
     updatedInterceptEntry: UpdatedInterceptEntryPayload;
     updatedInterceptOptions: UpdatedInterceptOptionsPayload;
     updatedInterceptStatus: UpdatedInterceptStatusPayload;
+    updatedPlugin: UpdatedPluginPayload;
     updatedProject: UpdatedProjectPayload;
     updatedReplaySession: UpdatedReplaySessionPayload;
     updatedReplaySessionCollection: UpdatedReplaySessionCollectionPayload;
@@ -2767,10 +2879,20 @@ export type TestUpstreamProxyInput = {
 export type TestUpstreamProxyPayload = {
     success?: Maybe<Scalars["Boolean"]["output"]>;
 };
+export type TogglePluginError = OtherUserError | PluginUserError | UnknownIdUserError;
+export type TogglePluginPayload = {
+    error?: Maybe<TogglePluginError>;
+    plugin?: Maybe<Plugin>;
+};
 export type ToggleWorkflowError = OtherUserError | UnknownIdUserError;
 export type ToggleWorkflowPayload = {
     error?: Maybe<ToggleWorkflowError>;
     workflow?: Maybe<Workflow>;
+};
+export type UninstallPluginPackageError = OtherUserError | UnknownIdUserError;
+export type UninstallPluginPackagePayload = {
+    deletedId?: Maybe<Scalars["ID"]["output"]>;
+    error?: Maybe<UninstallPluginPackageError>;
 };
 export type UnknownIdUserError = UserError & {
     code: Scalars["String"]["output"];
@@ -2779,12 +2901,14 @@ export type UnknownIdUserError = UserError & {
 export type UnsupportedPlatformUserError = UserError & {
     code: Scalars["String"]["output"];
 };
+export type UpdateAutomateSessionError = OtherUserError | PermissionDeniedUserError;
 export type UpdateAutomateSessionInput = {
     connection: ConnectionInfoInput;
     raw: Scalars["Blob"]["input"];
     settings: AutomateSettingsInput;
 };
 export type UpdateAutomateSessionPayload = {
+    error?: Maybe<UpdateAutomateSessionError>;
     session?: Maybe<AutomateSession>;
 };
 export type UpdateBrowserError = OtherUserError | RenderFailedUserError | UnsupportedPlatformUserError;
@@ -2912,6 +3036,9 @@ export type UpdatedInterceptOptionsPayload = {
 export type UpdatedInterceptStatusPayload = {
     status: InterceptStatus;
 };
+export type UpdatedPluginPayload = {
+    plugin: Plugin;
+};
 export type UpdatedProjectPayload = {
     project: Project;
 };
@@ -3013,6 +3140,7 @@ export type UpstreamProxyKind = (typeof UpstreamProxyKind)[keyof typeof Upstream
 export type User = {
     assistantUsage: AssistantUsage;
     id: Scalars["ID"]["output"];
+    plugins: Array<PluginFrontend>;
     profile: UserProfile;
     settings?: Maybe<UserSettings>;
 };
@@ -3207,7 +3335,6 @@ export type AutomateEntryFullFragment = {
         };
         payloads: Array<{
             __typename: "AutomatePayload";
-            kind: AutomatePayloadKind;
             options: {
                 __typename: "AutomateHostedFilePayload";
                 id: string;
@@ -3221,19 +3348,21 @@ export type AutomateEntryFullFragment = {
             };
             preprocessors: Array<{
                 __typename: "AutomatePreprocessor";
-                kind: AutomatePreprocessorKind;
                 options: {
+                    __typename: "AutomatePrefixPreprocessor";
                     value: string;
                 } | {
+                    __typename: "AutomateSuffixPreprocessor";
                     value: string;
+                } | {
+                    __typename: "AutomateUrlEncodePreprocessor";
+                    charset?: string | undefined | null;
+                    nonAscii: boolean;
+                } | {
+                    __typename: "AutomateWorkflowPreprocessor";
+                    id: string;
                 };
             }>;
-            urlEncode: {
-                __typename: "AutomateUrlEncodeOptions";
-                charset?: string | undefined | null;
-                enabled: boolean;
-                nonAscii: boolean;
-            };
         }>;
         placeholders: Array<{
             __typename: "AutomatePlaceholder";
@@ -3382,7 +3511,6 @@ export type AutomateSessionFullFragment = {
         };
         payloads: Array<{
             __typename: "AutomatePayload";
-            kind: AutomatePayloadKind;
             options: {
                 __typename: "AutomateHostedFilePayload";
                 id: string;
@@ -3396,19 +3524,21 @@ export type AutomateSessionFullFragment = {
             };
             preprocessors: Array<{
                 __typename: "AutomatePreprocessor";
-                kind: AutomatePreprocessorKind;
                 options: {
+                    __typename: "AutomatePrefixPreprocessor";
                     value: string;
                 } | {
+                    __typename: "AutomateSuffixPreprocessor";
                     value: string;
+                } | {
+                    __typename: "AutomateUrlEncodePreprocessor";
+                    charset?: string | undefined | null;
+                    nonAscii: boolean;
+                } | {
+                    __typename: "AutomateWorkflowPreprocessor";
+                    id: string;
                 };
             }>;
-            urlEncode: {
-                __typename: "AutomateUrlEncodeOptions";
-                charset?: string | undefined | null;
-                enabled: boolean;
-                nonAscii: boolean;
-            };
         }>;
         placeholders: Array<{
             __typename: "AutomatePlaceholder";
@@ -3443,7 +3573,6 @@ export type AutomateSettingsFullFragment = {
     };
     payloads: Array<{
         __typename: "AutomatePayload";
-        kind: AutomatePayloadKind;
         options: {
             __typename: "AutomateHostedFilePayload";
             id: string;
@@ -3457,19 +3586,21 @@ export type AutomateSettingsFullFragment = {
         };
         preprocessors: Array<{
             __typename: "AutomatePreprocessor";
-            kind: AutomatePreprocessorKind;
             options: {
+                __typename: "AutomatePrefixPreprocessor";
                 value: string;
             } | {
+                __typename: "AutomateSuffixPreprocessor";
                 value: string;
+            } | {
+                __typename: "AutomateUrlEncodePreprocessor";
+                charset?: string | undefined | null;
+                nonAscii: boolean;
+            } | {
+                __typename: "AutomateWorkflowPreprocessor";
+                id: string;
             };
         }>;
-        urlEncode: {
-            __typename: "AutomateUrlEncodeOptions";
-            charset?: string | undefined | null;
-            enabled: boolean;
-            nonAscii: boolean;
-        };
     }>;
     placeholders: Array<{
         __typename: "AutomatePlaceholder";
@@ -3489,7 +3620,6 @@ export type RetryOnFailureSettingFullFragment = {
 };
 export type AutomatePayloadFullFragment = {
     __typename: "AutomatePayload";
-    kind: AutomatePayloadKind;
     options: {
         __typename: "AutomateHostedFilePayload";
         id: string;
@@ -3503,19 +3633,55 @@ export type AutomatePayloadFullFragment = {
     };
     preprocessors: Array<{
         __typename: "AutomatePreprocessor";
-        kind: AutomatePreprocessorKind;
         options: {
+            __typename: "AutomatePrefixPreprocessor";
             value: string;
         } | {
+            __typename: "AutomateSuffixPreprocessor";
             value: string;
+        } | {
+            __typename: "AutomateUrlEncodePreprocessor";
+            charset?: string | undefined | null;
+            nonAscii: boolean;
+        } | {
+            __typename: "AutomateWorkflowPreprocessor";
+            id: string;
         };
     }>;
-    urlEncode: {
-        __typename: "AutomateUrlEncodeOptions";
+};
+export type AutomatePreprocessorFullFragment = {
+    __typename: "AutomatePreprocessor";
+    options: {
+        __typename: "AutomatePrefixPreprocessor";
+        value: string;
+    } | {
+        __typename: "AutomateSuffixPreprocessor";
+        value: string;
+    } | {
+        __typename: "AutomateUrlEncodePreprocessor";
         charset?: string | undefined | null;
-        enabled: boolean;
         nonAscii: boolean;
+    } | {
+        __typename: "AutomateWorkflowPreprocessor";
+        id: string;
     };
+};
+export type AutomatePrefixPreprocessorFullFragment = {
+    __typename: "AutomatePrefixPreprocessor";
+    value: string;
+};
+export type AutomateSuffixPreprocessorFullFragment = {
+    __typename: "AutomateSuffixPreprocessor";
+    value: string;
+};
+export type AutomateWorkflowPreprocessorFullFragment = {
+    __typename: "AutomateWorkflowPreprocessor";
+    id: string;
+};
+export type AutomateUrlEncodePreprocessorFullFragment = {
+    __typename: "AutomateUrlEncodePreprocessor";
+    charset?: string | undefined | null;
+    nonAscii: boolean;
 };
 export type AutomatePlaceholderFullFragment = {
     __typename: "AutomatePlaceholder";
@@ -3856,6 +4022,10 @@ type UserErrorFull_PermissionDeniedUserError_Fragment = {
     __typename: "PermissionDeniedUserError";
     code: string;
 };
+type UserErrorFull_PluginUserError_Fragment = {
+    __typename: "PluginUserError";
+    code: string;
+};
 type UserErrorFull_ProjectLockedUserError_Fragment = {
     __typename: "ProjectLockedUserError";
     code: string;
@@ -3880,10 +4050,15 @@ type UserErrorFull_WorkflowUserError_Fragment = {
     __typename: "WorkflowUserError";
     code: string;
 };
-export type UserErrorFullFragment = UserErrorFull_AliasTakenUserError_Fragment | UserErrorFull_AssistantUserError_Fragment | UserErrorFull_AuthenticationUserError_Fragment | UserErrorFull_AutomateTaskUserError_Fragment | UserErrorFull_BackupUserError_Fragment | UserErrorFull_InternalUserError_Fragment | UserErrorFull_InvalidGlobTermsUserError_Fragment | UserErrorFull_InvalidHttpqlUserError_Fragment | UserErrorFull_InvalidRegexUserError_Fragment | UserErrorFull_NameTakenUserError_Fragment | UserErrorFull_OtherUserError_Fragment | UserErrorFull_PermissionDeniedUserError_Fragment | UserErrorFull_ProjectLockedUserError_Fragment | UserErrorFull_RenderFailedUserError_Fragment | UserErrorFull_TaskInProgressUserError_Fragment | UserErrorFull_UnknownIdUserError_Fragment | UserErrorFull_UnsupportedPlatformUserError_Fragment | UserErrorFull_WorkflowUserError_Fragment;
+export type UserErrorFullFragment = UserErrorFull_AliasTakenUserError_Fragment | UserErrorFull_AssistantUserError_Fragment | UserErrorFull_AuthenticationUserError_Fragment | UserErrorFull_AutomateTaskUserError_Fragment | UserErrorFull_BackupUserError_Fragment | UserErrorFull_InternalUserError_Fragment | UserErrorFull_InvalidGlobTermsUserError_Fragment | UserErrorFull_InvalidHttpqlUserError_Fragment | UserErrorFull_InvalidRegexUserError_Fragment | UserErrorFull_NameTakenUserError_Fragment | UserErrorFull_OtherUserError_Fragment | UserErrorFull_PermissionDeniedUserError_Fragment | UserErrorFull_PluginUserError_Fragment | UserErrorFull_ProjectLockedUserError_Fragment | UserErrorFull_RenderFailedUserError_Fragment | UserErrorFull_TaskInProgressUserError_Fragment | UserErrorFull_UnknownIdUserError_Fragment | UserErrorFull_UnsupportedPlatformUserError_Fragment | UserErrorFull_WorkflowUserError_Fragment;
 export type InvalidHttpqlUserErrorFullFragment = {
     __typename: "InvalidHTTPQLUserError";
     query: string;
+    code: string;
+};
+export type PluginUserErrorFullFragment = {
+    __typename: "PluginUserError";
+    reason: PluginErrorReason;
     code: string;
 };
 export type DataExportMetaFragment = {
@@ -4437,6 +4612,85 @@ export type PageInfoFullFragment = {
     startCursor?: string | undefined | null;
     endCursor?: string | undefined | null;
 };
+export type PluginMetaFragment = {
+    __typename: "PluginFrontend";
+    id: string;
+    name?: string | undefined | null;
+    enabled: boolean;
+    manifestId: string;
+    package: {
+        id: string;
+    };
+};
+export type PluginFrontendMetaFragment = {
+    __typename: "PluginFrontend";
+    entrypoint?: string | undefined | null;
+    style?: string | undefined | null;
+    id: string;
+    name?: string | undefined | null;
+    enabled: boolean;
+    manifestId: string;
+    package: {
+        id: string;
+    };
+};
+export type PluginFrontendFullFragment = {
+    __typename: "PluginFrontend";
+    data?: JSONValue | undefined | null;
+    entrypoint?: string | undefined | null;
+    style?: string | undefined | null;
+    id: string;
+    name?: string | undefined | null;
+    enabled: boolean;
+    manifestId: string;
+    package: {
+        id: string;
+    };
+};
+export type PluginAuthorFullFragment = {
+    name?: string | undefined | null;
+    email?: string | undefined | null;
+    url?: string | undefined | null;
+};
+export type PluginPackageMetaFragment = {
+    id: string;
+    name?: string | undefined | null;
+    description?: string | undefined | null;
+    version: string;
+    installedAt: Date;
+    manifestId: string;
+    author?: {
+        name?: string | undefined | null;
+        email?: string | undefined | null;
+        url?: string | undefined | null;
+    } | undefined | null;
+};
+export type PluginPackageFullFragment = {
+    id: string;
+    name?: string | undefined | null;
+    description?: string | undefined | null;
+    version: string;
+    installedAt: Date;
+    manifestId: string;
+    plugins: Array<{
+        __typename: "PluginFrontend";
+        data?: JSONValue | undefined | null;
+        entrypoint?: string | undefined | null;
+        style?: string | undefined | null;
+        id: string;
+        name?: string | undefined | null;
+        enabled: boolean;
+        manifestId: string;
+        package: {
+            id: string;
+        };
+    }>;
+    author?: {
+        name?: string | undefined | null;
+        email?: string | undefined | null;
+        url?: string | undefined | null;
+    } | undefined | null;
+};
 export type ProjectFullFragment = {
     __typename: "Project";
     id: string;
@@ -4533,44 +4787,41 @@ export type ReplaySessionMetaFragment = {
         id: string;
     };
     entries: {
-        edges: Array<{
-            cursor: string;
-            node: {
-                __typename: "ReplayEntry";
+        nodes: Array<{
+            __typename: "ReplayEntry";
+            id: string;
+            error?: string | undefined | null;
+            sessionId: string;
+            request: {
+                __typename: "Request";
                 id: string;
-                error?: string | undefined | null;
-                sessionId: string;
-                request: {
-                    __typename: "Request";
+                host: string;
+                port: number;
+                path: string;
+                query: string;
+                method: string;
+                edited: boolean;
+                isTls: boolean;
+                length: number;
+                alteration: Alteration;
+                fileExtension?: string | undefined | null;
+                source: Source;
+                createdAt: Date;
+                metadata: {
+                    __typename: "RequestMetadata";
                     id: string;
-                    host: string;
-                    port: number;
-                    path: string;
-                    query: string;
-                    method: string;
-                    edited: boolean;
-                    isTls: boolean;
-                    length: number;
-                    alteration: Alteration;
-                    fileExtension?: string | undefined | null;
-                    source: Source;
-                    createdAt: Date;
-                    metadata: {
-                        __typename: "RequestMetadata";
-                        id: string;
-                        color?: string | undefined | null;
-                    };
-                    response?: {
-                        __typename: "Response";
-                        id: string;
-                        statusCode: number;
-                        roundtripTime: number;
-                        length: number;
-                        createdAt: Date;
-                        alteration: Alteration;
-                        edited: boolean;
-                    } | undefined | null;
+                    color?: string | undefined | null;
                 };
+                response?: {
+                    __typename: "Response";
+                    id: string;
+                    statusCode: number;
+                    roundtripTime: number;
+                    length: number;
+                    createdAt: Date;
+                    alteration: Alteration;
+                    edited: boolean;
+                } | undefined | null;
             };
         }>;
         pageInfo: {
@@ -4636,44 +4887,41 @@ export type ReplaySessionCollectionMetaFragment = {
             id: string;
         };
         entries: {
-            edges: Array<{
-                cursor: string;
-                node: {
-                    __typename: "ReplayEntry";
+            nodes: Array<{
+                __typename: "ReplayEntry";
+                id: string;
+                error?: string | undefined | null;
+                sessionId: string;
+                request: {
+                    __typename: "Request";
                     id: string;
-                    error?: string | undefined | null;
-                    sessionId: string;
-                    request: {
-                        __typename: "Request";
+                    host: string;
+                    port: number;
+                    path: string;
+                    query: string;
+                    method: string;
+                    edited: boolean;
+                    isTls: boolean;
+                    length: number;
+                    alteration: Alteration;
+                    fileExtension?: string | undefined | null;
+                    source: Source;
+                    createdAt: Date;
+                    metadata: {
+                        __typename: "RequestMetadata";
                         id: string;
-                        host: string;
-                        port: number;
-                        path: string;
-                        query: string;
-                        method: string;
-                        edited: boolean;
-                        isTls: boolean;
-                        length: number;
-                        alteration: Alteration;
-                        fileExtension?: string | undefined | null;
-                        source: Source;
-                        createdAt: Date;
-                        metadata: {
-                            __typename: "RequestMetadata";
-                            id: string;
-                            color?: string | undefined | null;
-                        };
-                        response?: {
-                            __typename: "Response";
-                            id: string;
-                            statusCode: number;
-                            roundtripTime: number;
-                            length: number;
-                            createdAt: Date;
-                            alteration: Alteration;
-                            edited: boolean;
-                        } | undefined | null;
+                        color?: string | undefined | null;
                     };
+                    response?: {
+                        __typename: "Response";
+                        id: string;
+                        statusCode: number;
+                        roundtripTime: number;
+                        length: number;
+                        createdAt: Date;
+                        alteration: Alteration;
+                        edited: boolean;
+                    } | undefined | null;
                 };
             }>;
             pageInfo: {
@@ -5193,8 +5441,8 @@ export type UserProfileFullFragment = {
 };
 export type UserSettingsFullFragment = {
     __typename: "UserSettings";
-    data: Record<string, unknown>;
-    migrations: Record<string, unknown>;
+    data: JSONValue;
+    migrations: JSONValue;
 };
 export type WorkflowMetaFragment = {
     __typename: "Workflow";
@@ -5206,7 +5454,7 @@ export type WorkflowMetaFragment = {
 };
 export type WorkflowFullFragment = {
     __typename: "Workflow";
-    definition: Record<string, unknown>;
+    definition: JSONValue;
     id: string;
     kind: WorkflowKind;
     name: string;
@@ -5215,7 +5463,7 @@ export type WorkflowFullFragment = {
 };
 export type WorkflowNodeDefinitionFullFragment = {
     __typename: "WorkflowNodeDefinition";
-    raw: Record<string, unknown>;
+    raw: JSONValue;
 };
 export type WorkflowTaskMetaFragment = {
     id: string;
@@ -5417,7 +5665,6 @@ export type RenameAutomateEntryMutation = {
                 };
                 payloads: Array<{
                     __typename: "AutomatePayload";
-                    kind: AutomatePayloadKind;
                     options: {
                         __typename: "AutomateHostedFilePayload";
                         id: string;
@@ -5431,19 +5678,21 @@ export type RenameAutomateEntryMutation = {
                     };
                     preprocessors: Array<{
                         __typename: "AutomatePreprocessor";
-                        kind: AutomatePreprocessorKind;
                         options: {
+                            __typename: "AutomatePrefixPreprocessor";
                             value: string;
                         } | {
+                            __typename: "AutomateSuffixPreprocessor";
                             value: string;
+                        } | {
+                            __typename: "AutomateUrlEncodePreprocessor";
+                            charset?: string | undefined | null;
+                            nonAscii: boolean;
+                        } | {
+                            __typename: "AutomateWorkflowPreprocessor";
+                            id: string;
                         };
                     }>;
-                    urlEncode: {
-                        __typename: "AutomateUrlEncodeOptions";
-                        charset?: string | undefined | null;
-                        enabled: boolean;
-                        nonAscii: boolean;
-                    };
                 }>;
                 placeholders: Array<{
                     __typename: "AutomatePlaceholder";
@@ -5491,7 +5740,6 @@ export type CreateAutomateSessionMutation = {
                 };
                 payloads: Array<{
                     __typename: "AutomatePayload";
-                    kind: AutomatePayloadKind;
                     options: {
                         __typename: "AutomateHostedFilePayload";
                         id: string;
@@ -5505,19 +5753,21 @@ export type CreateAutomateSessionMutation = {
                     };
                     preprocessors: Array<{
                         __typename: "AutomatePreprocessor";
-                        kind: AutomatePreprocessorKind;
                         options: {
+                            __typename: "AutomatePrefixPreprocessor";
                             value: string;
                         } | {
+                            __typename: "AutomateSuffixPreprocessor";
                             value: string;
+                        } | {
+                            __typename: "AutomateUrlEncodePreprocessor";
+                            charset?: string | undefined | null;
+                            nonAscii: boolean;
+                        } | {
+                            __typename: "AutomateWorkflowPreprocessor";
+                            id: string;
                         };
                     }>;
-                    urlEncode: {
-                        __typename: "AutomateUrlEncodeOptions";
-                        charset?: string | undefined | null;
-                        enabled: boolean;
-                        nonAscii: boolean;
-                    };
                 }>;
                 placeholders: Array<{
                     __typename: "AutomatePlaceholder";
@@ -5580,7 +5830,6 @@ export type RenameAutomateSessionMutation = {
                 };
                 payloads: Array<{
                     __typename: "AutomatePayload";
-                    kind: AutomatePayloadKind;
                     options: {
                         __typename: "AutomateHostedFilePayload";
                         id: string;
@@ -5594,19 +5843,21 @@ export type RenameAutomateSessionMutation = {
                     };
                     preprocessors: Array<{
                         __typename: "AutomatePreprocessor";
-                        kind: AutomatePreprocessorKind;
                         options: {
+                            __typename: "AutomatePrefixPreprocessor";
                             value: string;
                         } | {
+                            __typename: "AutomateSuffixPreprocessor";
                             value: string;
+                        } | {
+                            __typename: "AutomateUrlEncodePreprocessor";
+                            charset?: string | undefined | null;
+                            nonAscii: boolean;
+                        } | {
+                            __typename: "AutomateWorkflowPreprocessor";
+                            id: string;
                         };
                     }>;
-                    urlEncode: {
-                        __typename: "AutomateUrlEncodeOptions";
-                        charset?: string | undefined | null;
-                        enabled: boolean;
-                        nonAscii: boolean;
-                    };
                 }>;
                 placeholders: Array<{
                     __typename: "AutomatePlaceholder";
@@ -5661,7 +5912,6 @@ export type UpdateAutomateSessionMutation = {
                 };
                 payloads: Array<{
                     __typename: "AutomatePayload";
-                    kind: AutomatePayloadKind;
                     options: {
                         __typename: "AutomateHostedFilePayload";
                         id: string;
@@ -5675,19 +5925,21 @@ export type UpdateAutomateSessionMutation = {
                     };
                     preprocessors: Array<{
                         __typename: "AutomatePreprocessor";
-                        kind: AutomatePreprocessorKind;
                         options: {
+                            __typename: "AutomatePrefixPreprocessor";
                             value: string;
                         } | {
+                            __typename: "AutomateSuffixPreprocessor";
                             value: string;
+                        } | {
+                            __typename: "AutomateUrlEncodePreprocessor";
+                            charset?: string | undefined | null;
+                            nonAscii: boolean;
+                        } | {
+                            __typename: "AutomateWorkflowPreprocessor";
+                            id: string;
                         };
                     }>;
-                    urlEncode: {
-                        __typename: "AutomateUrlEncodeOptions";
-                        charset?: string | undefined | null;
-                        enabled: boolean;
-                        nonAscii: boolean;
-                    };
                 }>;
                 placeholders: Array<{
                     __typename: "AutomatePlaceholder";
@@ -6419,6 +6671,129 @@ export type RankUpstreamProxyMutation = {
         } | undefined | null;
     };
 };
+export type InstallPluginPackageMutationVariables = Exact<{
+    input: InstallPluginPackageInput;
+}>;
+export type InstallPluginPackageMutation = {
+    installPluginPackage: {
+        package?: {
+            id: string;
+            name?: string | undefined | null;
+            description?: string | undefined | null;
+            version: string;
+            installedAt: Date;
+            manifestId: string;
+            plugins: Array<{
+                __typename: "PluginFrontend";
+                data?: JSONValue | undefined | null;
+                entrypoint?: string | undefined | null;
+                style?: string | undefined | null;
+                id: string;
+                name?: string | undefined | null;
+                enabled: boolean;
+                manifestId: string;
+                package: {
+                    id: string;
+                };
+            }>;
+            author?: {
+                name?: string | undefined | null;
+                email?: string | undefined | null;
+                url?: string | undefined | null;
+            } | undefined | null;
+        } | undefined | null;
+        error?: {
+            __typename: "OtherUserError";
+            code: string;
+        } | {
+            __typename: "PluginUserError";
+            reason: PluginErrorReason;
+            code: string;
+        } | undefined | null;
+    };
+};
+export type UninstallPluginPackageMutationVariables = Exact<{
+    id: Scalars["ID"]["input"];
+}>;
+export type UninstallPluginPackageMutation = {
+    uninstallPluginPackage: {
+        deletedId?: string | undefined | null;
+        error?: {
+            __typename: "OtherUserError";
+            code: string;
+        } | {
+            __typename: "UnknownIdUserError";
+            id: string;
+            code: string;
+        } | undefined | null;
+    };
+};
+export type TogglePluginMutationVariables = Exact<{
+    id: Scalars["ID"]["input"];
+    enabled: Scalars["Boolean"]["input"];
+}>;
+export type TogglePluginMutation = {
+    togglePlugin: {
+        plugin?: {
+            __typename: "PluginFrontend";
+            data?: JSONValue | undefined | null;
+            entrypoint?: string | undefined | null;
+            style?: string | undefined | null;
+            id: string;
+            name?: string | undefined | null;
+            enabled: boolean;
+            manifestId: string;
+            package: {
+                id: string;
+            };
+        } | undefined | null;
+        error?: {
+            __typename: "OtherUserError";
+            code: string;
+        } | {
+            __typename: "PluginUserError";
+            reason: PluginErrorReason;
+            code: string;
+        } | {
+            __typename: "UnknownIdUserError";
+            id: string;
+            code: string;
+        } | undefined | null;
+    };
+};
+export type SetPluginDataMutationVariables = Exact<{
+    id: Scalars["ID"]["input"];
+    data: Scalars["JSON"]["input"];
+}>;
+export type SetPluginDataMutation = {
+    setPluginData: {
+        plugin?: {
+            __typename: "PluginFrontend";
+            data?: JSONValue | undefined | null;
+            entrypoint?: string | undefined | null;
+            style?: string | undefined | null;
+            id: string;
+            name?: string | undefined | null;
+            enabled: boolean;
+            manifestId: string;
+            package: {
+                id: string;
+            };
+        } | undefined | null;
+        error?: {
+            __typename: "OtherUserError";
+            code: string;
+        } | {
+            __typename: "PluginUserError";
+            reason: PluginErrorReason;
+            code: string;
+        } | {
+            __typename: "UnknownIdUserError";
+            id: string;
+            code: string;
+        } | undefined | null;
+    };
+};
 export type CreateProjectMutationVariables = Exact<{
     input: CreateProjectInput;
 }>;
@@ -6566,44 +6941,41 @@ export type RenameReplaySessionCollectionMutation = {
                     id: string;
                 };
                 entries: {
-                    edges: Array<{
-                        cursor: string;
-                        node: {
-                            __typename: "ReplayEntry";
+                    nodes: Array<{
+                        __typename: "ReplayEntry";
+                        id: string;
+                        error?: string | undefined | null;
+                        sessionId: string;
+                        request: {
+                            __typename: "Request";
                             id: string;
-                            error?: string | undefined | null;
-                            sessionId: string;
-                            request: {
-                                __typename: "Request";
+                            host: string;
+                            port: number;
+                            path: string;
+                            query: string;
+                            method: string;
+                            edited: boolean;
+                            isTls: boolean;
+                            length: number;
+                            alteration: Alteration;
+                            fileExtension?: string | undefined | null;
+                            source: Source;
+                            createdAt: Date;
+                            metadata: {
+                                __typename: "RequestMetadata";
                                 id: string;
-                                host: string;
-                                port: number;
-                                path: string;
-                                query: string;
-                                method: string;
-                                edited: boolean;
-                                isTls: boolean;
-                                length: number;
-                                alteration: Alteration;
-                                fileExtension?: string | undefined | null;
-                                source: Source;
-                                createdAt: Date;
-                                metadata: {
-                                    __typename: "RequestMetadata";
-                                    id: string;
-                                    color?: string | undefined | null;
-                                };
-                                response?: {
-                                    __typename: "Response";
-                                    id: string;
-                                    statusCode: number;
-                                    roundtripTime: number;
-                                    length: number;
-                                    createdAt: Date;
-                                    alteration: Alteration;
-                                    edited: boolean;
-                                } | undefined | null;
+                                color?: string | undefined | null;
                             };
+                            response?: {
+                                __typename: "Response";
+                                id: string;
+                                statusCode: number;
+                                roundtripTime: number;
+                                length: number;
+                                createdAt: Date;
+                                alteration: Alteration;
+                                edited: boolean;
+                            } | undefined | null;
                         };
                     }>;
                     pageInfo: {
@@ -6677,44 +7049,41 @@ export type CreateReplaySessionCollectionMutation = {
                     id: string;
                 };
                 entries: {
-                    edges: Array<{
-                        cursor: string;
-                        node: {
-                            __typename: "ReplayEntry";
+                    nodes: Array<{
+                        __typename: "ReplayEntry";
+                        id: string;
+                        error?: string | undefined | null;
+                        sessionId: string;
+                        request: {
+                            __typename: "Request";
                             id: string;
-                            error?: string | undefined | null;
-                            sessionId: string;
-                            request: {
-                                __typename: "Request";
+                            host: string;
+                            port: number;
+                            path: string;
+                            query: string;
+                            method: string;
+                            edited: boolean;
+                            isTls: boolean;
+                            length: number;
+                            alteration: Alteration;
+                            fileExtension?: string | undefined | null;
+                            source: Source;
+                            createdAt: Date;
+                            metadata: {
+                                __typename: "RequestMetadata";
                                 id: string;
-                                host: string;
-                                port: number;
-                                path: string;
-                                query: string;
-                                method: string;
-                                edited: boolean;
-                                isTls: boolean;
-                                length: number;
-                                alteration: Alteration;
-                                fileExtension?: string | undefined | null;
-                                source: Source;
-                                createdAt: Date;
-                                metadata: {
-                                    __typename: "RequestMetadata";
-                                    id: string;
-                                    color?: string | undefined | null;
-                                };
-                                response?: {
-                                    __typename: "Response";
-                                    id: string;
-                                    statusCode: number;
-                                    roundtripTime: number;
-                                    length: number;
-                                    createdAt: Date;
-                                    alteration: Alteration;
-                                    edited: boolean;
-                                } | undefined | null;
+                                color?: string | undefined | null;
                             };
+                            response?: {
+                                __typename: "Response";
+                                id: string;
+                                statusCode: number;
+                                roundtripTime: number;
+                                length: number;
+                                createdAt: Date;
+                                alteration: Alteration;
+                                edited: boolean;
+                            } | undefined | null;
                         };
                     }>;
                     pageInfo: {
@@ -6793,44 +7162,41 @@ export type RenameReplaySessionMutation = {
                 id: string;
             };
             entries: {
-                edges: Array<{
-                    cursor: string;
-                    node: {
-                        __typename: "ReplayEntry";
+                nodes: Array<{
+                    __typename: "ReplayEntry";
+                    id: string;
+                    error?: string | undefined | null;
+                    sessionId: string;
+                    request: {
+                        __typename: "Request";
                         id: string;
-                        error?: string | undefined | null;
-                        sessionId: string;
-                        request: {
-                            __typename: "Request";
+                        host: string;
+                        port: number;
+                        path: string;
+                        query: string;
+                        method: string;
+                        edited: boolean;
+                        isTls: boolean;
+                        length: number;
+                        alteration: Alteration;
+                        fileExtension?: string | undefined | null;
+                        source: Source;
+                        createdAt: Date;
+                        metadata: {
+                            __typename: "RequestMetadata";
                             id: string;
-                            host: string;
-                            port: number;
-                            path: string;
-                            query: string;
-                            method: string;
-                            edited: boolean;
-                            isTls: boolean;
-                            length: number;
-                            alteration: Alteration;
-                            fileExtension?: string | undefined | null;
-                            source: Source;
-                            createdAt: Date;
-                            metadata: {
-                                __typename: "RequestMetadata";
-                                id: string;
-                                color?: string | undefined | null;
-                            };
-                            response?: {
-                                __typename: "Response";
-                                id: string;
-                                statusCode: number;
-                                roundtripTime: number;
-                                length: number;
-                                createdAt: Date;
-                                alteration: Alteration;
-                                edited: boolean;
-                            } | undefined | null;
+                            color?: string | undefined | null;
                         };
+                        response?: {
+                            __typename: "Response";
+                            id: string;
+                            statusCode: number;
+                            roundtripTime: number;
+                            length: number;
+                            createdAt: Date;
+                            alteration: Alteration;
+                            edited: boolean;
+                        } | undefined | null;
                     };
                 }>;
                 pageInfo: {
@@ -6900,44 +7266,41 @@ export type SetActiveReplaySessionEntryMutation = {
                 id: string;
             };
             entries: {
-                edges: Array<{
-                    cursor: string;
-                    node: {
-                        __typename: "ReplayEntry";
+                nodes: Array<{
+                    __typename: "ReplayEntry";
+                    id: string;
+                    error?: string | undefined | null;
+                    sessionId: string;
+                    request: {
+                        __typename: "Request";
                         id: string;
-                        error?: string | undefined | null;
-                        sessionId: string;
-                        request: {
-                            __typename: "Request";
+                        host: string;
+                        port: number;
+                        path: string;
+                        query: string;
+                        method: string;
+                        edited: boolean;
+                        isTls: boolean;
+                        length: number;
+                        alteration: Alteration;
+                        fileExtension?: string | undefined | null;
+                        source: Source;
+                        createdAt: Date;
+                        metadata: {
+                            __typename: "RequestMetadata";
                             id: string;
-                            host: string;
-                            port: number;
-                            path: string;
-                            query: string;
-                            method: string;
-                            edited: boolean;
-                            isTls: boolean;
-                            length: number;
-                            alteration: Alteration;
-                            fileExtension?: string | undefined | null;
-                            source: Source;
-                            createdAt: Date;
-                            metadata: {
-                                __typename: "RequestMetadata";
-                                id: string;
-                                color?: string | undefined | null;
-                            };
-                            response?: {
-                                __typename: "Response";
-                                id: string;
-                                statusCode: number;
-                                roundtripTime: number;
-                                length: number;
-                                createdAt: Date;
-                                alteration: Alteration;
-                                edited: boolean;
-                            } | undefined | null;
+                            color?: string | undefined | null;
                         };
+                        response?: {
+                            __typename: "Response";
+                            id: string;
+                            statusCode: number;
+                            roundtripTime: number;
+                            length: number;
+                            createdAt: Date;
+                            alteration: Alteration;
+                            edited: boolean;
+                        } | undefined | null;
                     };
                 }>;
                 pageInfo: {
@@ -7022,44 +7385,41 @@ export type CreateReplaySessionMutation = {
                         id: string;
                     };
                     entries: {
-                        edges: Array<{
-                            cursor: string;
-                            node: {
-                                __typename: "ReplayEntry";
+                        nodes: Array<{
+                            __typename: "ReplayEntry";
+                            id: string;
+                            error?: string | undefined | null;
+                            sessionId: string;
+                            request: {
+                                __typename: "Request";
                                 id: string;
-                                error?: string | undefined | null;
-                                sessionId: string;
-                                request: {
-                                    __typename: "Request";
+                                host: string;
+                                port: number;
+                                path: string;
+                                query: string;
+                                method: string;
+                                edited: boolean;
+                                isTls: boolean;
+                                length: number;
+                                alteration: Alteration;
+                                fileExtension?: string | undefined | null;
+                                source: Source;
+                                createdAt: Date;
+                                metadata: {
+                                    __typename: "RequestMetadata";
                                     id: string;
-                                    host: string;
-                                    port: number;
-                                    path: string;
-                                    query: string;
-                                    method: string;
-                                    edited: boolean;
-                                    isTls: boolean;
-                                    length: number;
-                                    alteration: Alteration;
-                                    fileExtension?: string | undefined | null;
-                                    source: Source;
-                                    createdAt: Date;
-                                    metadata: {
-                                        __typename: "RequestMetadata";
-                                        id: string;
-                                        color?: string | undefined | null;
-                                    };
-                                    response?: {
-                                        __typename: "Response";
-                                        id: string;
-                                        statusCode: number;
-                                        roundtripTime: number;
-                                        length: number;
-                                        createdAt: Date;
-                                        alteration: Alteration;
-                                        edited: boolean;
-                                    } | undefined | null;
+                                    color?: string | undefined | null;
                                 };
+                                response?: {
+                                    __typename: "Response";
+                                    id: string;
+                                    statusCode: number;
+                                    roundtripTime: number;
+                                    length: number;
+                                    createdAt: Date;
+                                    alteration: Alteration;
+                                    edited: boolean;
+                                } | undefined | null;
                             };
                         }>;
                         pageInfo: {
@@ -7115,44 +7475,41 @@ export type CreateReplaySessionMutation = {
                 };
             } | undefined | null;
             entries: {
-                edges: Array<{
-                    cursor: string;
-                    node: {
-                        __typename: "ReplayEntry";
+                nodes: Array<{
+                    __typename: "ReplayEntry";
+                    id: string;
+                    error?: string | undefined | null;
+                    sessionId: string;
+                    request: {
+                        __typename: "Request";
                         id: string;
-                        error?: string | undefined | null;
-                        sessionId: string;
-                        request: {
-                            __typename: "Request";
+                        host: string;
+                        port: number;
+                        path: string;
+                        query: string;
+                        method: string;
+                        edited: boolean;
+                        isTls: boolean;
+                        length: number;
+                        alteration: Alteration;
+                        fileExtension?: string | undefined | null;
+                        source: Source;
+                        createdAt: Date;
+                        metadata: {
+                            __typename: "RequestMetadata";
                             id: string;
-                            host: string;
-                            port: number;
-                            path: string;
-                            query: string;
-                            method: string;
-                            edited: boolean;
-                            isTls: boolean;
-                            length: number;
-                            alteration: Alteration;
-                            fileExtension?: string | undefined | null;
-                            source: Source;
-                            createdAt: Date;
-                            metadata: {
-                                __typename: "RequestMetadata";
-                                id: string;
-                                color?: string | undefined | null;
-                            };
-                            response?: {
-                                __typename: "Response";
-                                id: string;
-                                statusCode: number;
-                                roundtripTime: number;
-                                length: number;
-                                createdAt: Date;
-                                alteration: Alteration;
-                                edited: boolean;
-                            } | undefined | null;
+                            color?: string | undefined | null;
                         };
+                        response?: {
+                            __typename: "Response";
+                            id: string;
+                            statusCode: number;
+                            roundtripTime: number;
+                            length: number;
+                            createdAt: Date;
+                            alteration: Alteration;
+                            edited: boolean;
+                        } | undefined | null;
                     };
                 }>;
                 pageInfo: {
@@ -7222,44 +7579,41 @@ export type MoveReplaySessionMutation = {
                 id: string;
             };
             entries: {
-                edges: Array<{
-                    cursor: string;
-                    node: {
-                        __typename: "ReplayEntry";
+                nodes: Array<{
+                    __typename: "ReplayEntry";
+                    id: string;
+                    error?: string | undefined | null;
+                    sessionId: string;
+                    request: {
+                        __typename: "Request";
                         id: string;
-                        error?: string | undefined | null;
-                        sessionId: string;
-                        request: {
-                            __typename: "Request";
+                        host: string;
+                        port: number;
+                        path: string;
+                        query: string;
+                        method: string;
+                        edited: boolean;
+                        isTls: boolean;
+                        length: number;
+                        alteration: Alteration;
+                        fileExtension?: string | undefined | null;
+                        source: Source;
+                        createdAt: Date;
+                        metadata: {
+                            __typename: "RequestMetadata";
                             id: string;
-                            host: string;
-                            port: number;
-                            path: string;
-                            query: string;
-                            method: string;
-                            edited: boolean;
-                            isTls: boolean;
-                            length: number;
-                            alteration: Alteration;
-                            fileExtension?: string | undefined | null;
-                            source: Source;
-                            createdAt: Date;
-                            metadata: {
-                                __typename: "RequestMetadata";
-                                id: string;
-                                color?: string | undefined | null;
-                            };
-                            response?: {
-                                __typename: "Response";
-                                id: string;
-                                statusCode: number;
-                                roundtripTime: number;
-                                length: number;
-                                createdAt: Date;
-                                alteration: Alteration;
-                                edited: boolean;
-                            } | undefined | null;
+                            color?: string | undefined | null;
                         };
+                        response?: {
+                            __typename: "Response";
+                            id: string;
+                            statusCode: number;
+                            roundtripTime: number;
+                            length: number;
+                            createdAt: Date;
+                            alteration: Alteration;
+                            edited: boolean;
+                        } | undefined | null;
                     };
                 }>;
                 pageInfo: {
@@ -7732,8 +8086,8 @@ export type UpdateViewerSettingsMutation = {
     updateViewerSettings: {
         settings?: {
             __typename: "UserSettings";
-            data: Record<string, unknown>;
-            migrations: Record<string, unknown>;
+            data: JSONValue;
+            migrations: JSONValue;
         } | undefined | null;
     };
 };
@@ -7754,7 +8108,7 @@ export type CreateWorkflowMutation = {
         } | undefined | null;
         workflow?: {
             __typename: "Workflow";
-            definition: Record<string, unknown>;
+            definition: JSONValue;
             id: string;
             kind: WorkflowKind;
             name: string;
@@ -7787,7 +8141,7 @@ export type ToggleWorkflowMutation = {
         } | undefined | null;
         workflow?: {
             __typename: "Workflow";
-            definition: Record<string, unknown>;
+            definition: JSONValue;
             id: string;
             kind: WorkflowKind;
             name: string;
@@ -7812,7 +8166,7 @@ export type RenameWorkflowMutation = {
         } | undefined | null;
         workflow?: {
             __typename: "Workflow";
-            definition: Record<string, unknown>;
+            definition: JSONValue;
             id: string;
             kind: WorkflowKind;
             name: string;
@@ -7843,7 +8197,7 @@ export type UpdateWorkflowMutation = {
         } | undefined | null;
         workflow?: {
             __typename: "Workflow";
-            definition: Record<string, unknown>;
+            definition: JSONValue;
             id: string;
             kind: WorkflowKind;
             name: string;
@@ -7928,7 +8282,37 @@ export type GlobalizeWorkflowMutation = {
         } | undefined | null;
         workflow?: {
             __typename: "Workflow";
-            definition: Record<string, unknown>;
+            definition: JSONValue;
+            id: string;
+            kind: WorkflowKind;
+            name: string;
+            enabled: boolean;
+            global: boolean;
+        } | undefined | null;
+    };
+};
+export type LocalizeWorkflowMutationVariables = Exact<{
+    id: Scalars["ID"]["input"];
+}>;
+export type LocalizeWorkflowMutation = {
+    localizeWorkflow: {
+        error?: {
+            __typename: "OtherUserError";
+            code: string;
+        } | {
+            __typename: "UnknownIdUserError";
+            id: string;
+            code: string;
+        } | {
+            __typename: "WorkflowUserError";
+            nodeId?: string | undefined | null;
+            message: string;
+            reason: WorkflowErrorReason;
+            code: string;
+        } | undefined | null;
+        workflow?: {
+            __typename: "Workflow";
+            definition: JSONValue;
             id: string;
             kind: WorkflowKind;
             name: string;
@@ -8021,7 +8405,6 @@ export type AutomateEntryQuery = {
             };
             payloads: Array<{
                 __typename: "AutomatePayload";
-                kind: AutomatePayloadKind;
                 options: {
                     __typename: "AutomateHostedFilePayload";
                     id: string;
@@ -8035,19 +8418,21 @@ export type AutomateEntryQuery = {
                 };
                 preprocessors: Array<{
                     __typename: "AutomatePreprocessor";
-                    kind: AutomatePreprocessorKind;
                     options: {
+                        __typename: "AutomatePrefixPreprocessor";
                         value: string;
                     } | {
+                        __typename: "AutomateSuffixPreprocessor";
                         value: string;
+                    } | {
+                        __typename: "AutomateUrlEncodePreprocessor";
+                        charset?: string | undefined | null;
+                        nonAscii: boolean;
+                    } | {
+                        __typename: "AutomateWorkflowPreprocessor";
+                        id: string;
                     };
                 }>;
-                urlEncode: {
-                    __typename: "AutomateUrlEncodeOptions";
-                    charset?: string | undefined | null;
-                    enabled: boolean;
-                    nonAscii: boolean;
-                };
             }>;
             placeholders: Array<{
                 __typename: "AutomatePlaceholder";
@@ -8140,7 +8525,6 @@ export type AutomateEntryRequestsQuery = {
             };
             payloads: Array<{
                 __typename: "AutomatePayload";
-                kind: AutomatePayloadKind;
                 options: {
                     __typename: "AutomateHostedFilePayload";
                     id: string;
@@ -8154,19 +8538,21 @@ export type AutomateEntryRequestsQuery = {
                 };
                 preprocessors: Array<{
                     __typename: "AutomatePreprocessor";
-                    kind: AutomatePreprocessorKind;
                     options: {
+                        __typename: "AutomatePrefixPreprocessor";
                         value: string;
                     } | {
+                        __typename: "AutomateSuffixPreprocessor";
                         value: string;
+                    } | {
+                        __typename: "AutomateUrlEncodePreprocessor";
+                        charset?: string | undefined | null;
+                        nonAscii: boolean;
+                    } | {
+                        __typename: "AutomateWorkflowPreprocessor";
+                        id: string;
                     };
                 }>;
-                urlEncode: {
-                    __typename: "AutomateUrlEncodeOptions";
-                    charset?: string | undefined | null;
-                    enabled: boolean;
-                    nonAscii: boolean;
-                };
             }>;
             placeholders: Array<{
                 __typename: "AutomatePlaceholder";
@@ -8257,7 +8643,6 @@ export type AutomateEntryRequestsByOffsetQuery = {
             };
             payloads: Array<{
                 __typename: "AutomatePayload";
-                kind: AutomatePayloadKind;
                 options: {
                     __typename: "AutomateHostedFilePayload";
                     id: string;
@@ -8271,19 +8656,21 @@ export type AutomateEntryRequestsByOffsetQuery = {
                 };
                 preprocessors: Array<{
                     __typename: "AutomatePreprocessor";
-                    kind: AutomatePreprocessorKind;
                     options: {
+                        __typename: "AutomatePrefixPreprocessor";
                         value: string;
                     } | {
+                        __typename: "AutomateSuffixPreprocessor";
                         value: string;
+                    } | {
+                        __typename: "AutomateUrlEncodePreprocessor";
+                        charset?: string | undefined | null;
+                        nonAscii: boolean;
+                    } | {
+                        __typename: "AutomateWorkflowPreprocessor";
+                        id: string;
                     };
                 }>;
-                urlEncode: {
-                    __typename: "AutomateUrlEncodeOptions";
-                    charset?: string | undefined | null;
-                    enabled: boolean;
-                    nonAscii: boolean;
-                };
             }>;
             placeholders: Array<{
                 __typename: "AutomatePlaceholder";
@@ -8329,7 +8716,6 @@ export type AutomateEntryRequestsCountQuery = {
             };
             payloads: Array<{
                 __typename: "AutomatePayload";
-                kind: AutomatePayloadKind;
                 options: {
                     __typename: "AutomateHostedFilePayload";
                     id: string;
@@ -8343,19 +8729,21 @@ export type AutomateEntryRequestsCountQuery = {
                 };
                 preprocessors: Array<{
                     __typename: "AutomatePreprocessor";
-                    kind: AutomatePreprocessorKind;
                     options: {
+                        __typename: "AutomatePrefixPreprocessor";
                         value: string;
                     } | {
+                        __typename: "AutomateSuffixPreprocessor";
                         value: string;
+                    } | {
+                        __typename: "AutomateUrlEncodePreprocessor";
+                        charset?: string | undefined | null;
+                        nonAscii: boolean;
+                    } | {
+                        __typename: "AutomateWorkflowPreprocessor";
+                        id: string;
                     };
                 }>;
-                urlEncode: {
-                    __typename: "AutomateUrlEncodeOptions";
-                    charset?: string | undefined | null;
-                    enabled: boolean;
-                    nonAscii: boolean;
-                };
             }>;
             placeholders: Array<{
                 __typename: "AutomatePlaceholder";
@@ -8425,7 +8813,6 @@ export type AutomateSessionQuery = {
             };
             payloads: Array<{
                 __typename: "AutomatePayload";
-                kind: AutomatePayloadKind;
                 options: {
                     __typename: "AutomateHostedFilePayload";
                     id: string;
@@ -8439,19 +8826,21 @@ export type AutomateSessionQuery = {
                 };
                 preprocessors: Array<{
                     __typename: "AutomatePreprocessor";
-                    kind: AutomatePreprocessorKind;
                     options: {
+                        __typename: "AutomatePrefixPreprocessor";
                         value: string;
                     } | {
+                        __typename: "AutomateSuffixPreprocessor";
                         value: string;
+                    } | {
+                        __typename: "AutomateUrlEncodePreprocessor";
+                        charset?: string | undefined | null;
+                        nonAscii: boolean;
+                    } | {
+                        __typename: "AutomateWorkflowPreprocessor";
+                        id: string;
                     };
                 }>;
-                urlEncode: {
-                    __typename: "AutomateUrlEncodeOptions";
-                    charset?: string | undefined | null;
-                    enabled: boolean;
-                    nonAscii: boolean;
-                };
             }>;
             placeholders: Array<{
                 __typename: "AutomatePlaceholder";
@@ -9324,6 +9713,37 @@ export type UpstreamProxiesQuery = {
         } | undefined | null;
     }>;
 };
+export type PluginPackagesQueryVariables = Exact<{
+    [key: string]: never;
+}>;
+export type PluginPackagesQuery = {
+    pluginPackages: Array<{
+        id: string;
+        name?: string | undefined | null;
+        description?: string | undefined | null;
+        version: string;
+        installedAt: Date;
+        manifestId: string;
+        plugins: Array<{
+            __typename: "PluginFrontend";
+            data?: JSONValue | undefined | null;
+            entrypoint?: string | undefined | null;
+            style?: string | undefined | null;
+            id: string;
+            name?: string | undefined | null;
+            enabled: boolean;
+            manifestId: string;
+            package: {
+                id: string;
+            };
+        }>;
+        author?: {
+            name?: string | undefined | null;
+            email?: string | undefined | null;
+            url?: string | undefined | null;
+        } | undefined | null;
+    }>;
+};
 export type CurrentProjectQueryVariables = Exact<{
     [key: string]: never;
 }>;
@@ -9453,44 +9873,41 @@ export type ActiveReplayEntryBySessionQuery = {
             id: string;
         };
         entries: {
-            edges: Array<{
-                cursor: string;
-                node: {
-                    __typename: "ReplayEntry";
+            nodes: Array<{
+                __typename: "ReplayEntry";
+                id: string;
+                error?: string | undefined | null;
+                sessionId: string;
+                request: {
+                    __typename: "Request";
                     id: string;
-                    error?: string | undefined | null;
-                    sessionId: string;
-                    request: {
-                        __typename: "Request";
+                    host: string;
+                    port: number;
+                    path: string;
+                    query: string;
+                    method: string;
+                    edited: boolean;
+                    isTls: boolean;
+                    length: number;
+                    alteration: Alteration;
+                    fileExtension?: string | undefined | null;
+                    source: Source;
+                    createdAt: Date;
+                    metadata: {
+                        __typename: "RequestMetadata";
                         id: string;
-                        host: string;
-                        port: number;
-                        path: string;
-                        query: string;
-                        method: string;
-                        edited: boolean;
-                        isTls: boolean;
-                        length: number;
-                        alteration: Alteration;
-                        fileExtension?: string | undefined | null;
-                        source: Source;
-                        createdAt: Date;
-                        metadata: {
-                            __typename: "RequestMetadata";
-                            id: string;
-                            color?: string | undefined | null;
-                        };
-                        response?: {
-                            __typename: "Response";
-                            id: string;
-                            statusCode: number;
-                            roundtripTime: number;
-                            length: number;
-                            createdAt: Date;
-                            alteration: Alteration;
-                            edited: boolean;
-                        } | undefined | null;
+                        color?: string | undefined | null;
                     };
+                    response?: {
+                        __typename: "Response";
+                        id: string;
+                        statusCode: number;
+                        roundtripTime: number;
+                        length: number;
+                        createdAt: Date;
+                        alteration: Alteration;
+                        edited: boolean;
+                    } | undefined | null;
                 };
             }>;
             pageInfo: {
@@ -9569,6 +9986,43 @@ export type ReplayEntriesBySessionQuery = {
                 value: number;
                 snapshot: number;
             };
+            nodes: Array<{
+                __typename: "ReplayEntry";
+                id: string;
+                error?: string | undefined | null;
+                sessionId: string;
+                request: {
+                    __typename: "Request";
+                    id: string;
+                    host: string;
+                    port: number;
+                    path: string;
+                    query: string;
+                    method: string;
+                    edited: boolean;
+                    isTls: boolean;
+                    length: number;
+                    alteration: Alteration;
+                    fileExtension?: string | undefined | null;
+                    source: Source;
+                    createdAt: Date;
+                    metadata: {
+                        __typename: "RequestMetadata";
+                        id: string;
+                        color?: string | undefined | null;
+                    };
+                    response?: {
+                        __typename: "Response";
+                        id: string;
+                        statusCode: number;
+                        roundtripTime: number;
+                        length: number;
+                        createdAt: Date;
+                        alteration: Alteration;
+                        edited: boolean;
+                    } | undefined | null;
+                };
+            }>;
         };
         activeEntry?: {
             __typename: "ReplayEntry";
@@ -9765,44 +10219,41 @@ export type ReplaySessionCollectionsQuery = {
                         id: string;
                     };
                     entries: {
-                        edges: Array<{
-                            cursor: string;
-                            node: {
-                                __typename: "ReplayEntry";
+                        nodes: Array<{
+                            __typename: "ReplayEntry";
+                            id: string;
+                            error?: string | undefined | null;
+                            sessionId: string;
+                            request: {
+                                __typename: "Request";
                                 id: string;
-                                error?: string | undefined | null;
-                                sessionId: string;
-                                request: {
-                                    __typename: "Request";
+                                host: string;
+                                port: number;
+                                path: string;
+                                query: string;
+                                method: string;
+                                edited: boolean;
+                                isTls: boolean;
+                                length: number;
+                                alteration: Alteration;
+                                fileExtension?: string | undefined | null;
+                                source: Source;
+                                createdAt: Date;
+                                metadata: {
+                                    __typename: "RequestMetadata";
                                     id: string;
-                                    host: string;
-                                    port: number;
-                                    path: string;
-                                    query: string;
-                                    method: string;
-                                    edited: boolean;
-                                    isTls: boolean;
-                                    length: number;
-                                    alteration: Alteration;
-                                    fileExtension?: string | undefined | null;
-                                    source: Source;
-                                    createdAt: Date;
-                                    metadata: {
-                                        __typename: "RequestMetadata";
-                                        id: string;
-                                        color?: string | undefined | null;
-                                    };
-                                    response?: {
-                                        __typename: "Response";
-                                        id: string;
-                                        statusCode: number;
-                                        roundtripTime: number;
-                                        length: number;
-                                        createdAt: Date;
-                                        alteration: Alteration;
-                                        edited: boolean;
-                                    } | undefined | null;
+                                    color?: string | undefined | null;
                                 };
+                                response?: {
+                                    __typename: "Response";
+                                    id: string;
+                                    statusCode: number;
+                                    roundtripTime: number;
+                                    length: number;
+                                    createdAt: Date;
+                                    alteration: Alteration;
+                                    edited: boolean;
+                                } | undefined | null;
                             };
                         }>;
                         pageInfo: {
@@ -10493,8 +10944,8 @@ export type UserSettingsQuery = {
         id: string;
         settings?: {
             __typename: "UserSettings";
-            data: Record<string, unknown>;
-            migrations: Record<string, unknown>;
+            data: JSONValue;
+            migrations: JSONValue;
         } | undefined | null;
     };
 };
@@ -10504,7 +10955,7 @@ export type WorkflowQueryVariables = Exact<{
 export type WorkflowQuery = {
     workflow?: {
         __typename: "Workflow";
-        definition: Record<string, unknown>;
+        definition: JSONValue;
         id: string;
         kind: WorkflowKind;
         name: string;
@@ -10518,7 +10969,7 @@ export type WorkflowsQueryVariables = Exact<{
 export type WorkflowsQuery = {
     workflows: Array<{
         __typename: "Workflow";
-        definition: Record<string, unknown>;
+        definition: JSONValue;
         id: string;
         kind: WorkflowKind;
         name: string;
@@ -10532,7 +10983,7 @@ export type WorkflowNodeDefinitionsQueryVariables = Exact<{
 export type WorkflowNodeDefinitionsQuery = {
     workflowNodeDefinitions: Array<{
         __typename: "WorkflowNodeDefinition";
-        raw: Record<string, unknown>;
+        raw: JSONValue;
     }>;
 };
 export type CreatedAssistantMessageSubscriptionVariables = Exact<{
@@ -11474,6 +11925,67 @@ export type FinishedDeleteInterceptEntriesTaskSubscription = {
         } | undefined | null;
     };
 };
+export type CreatedPluginPackageSubscriptionVariables = Exact<{
+    [key: string]: never;
+}>;
+export type CreatedPluginPackageSubscription = {
+    createdPluginPackage: {
+        package: {
+            id: string;
+            name?: string | undefined | null;
+            description?: string | undefined | null;
+            version: string;
+            installedAt: Date;
+            manifestId: string;
+            plugins: Array<{
+                __typename: "PluginFrontend";
+                data?: JSONValue | undefined | null;
+                entrypoint?: string | undefined | null;
+                style?: string | undefined | null;
+                id: string;
+                name?: string | undefined | null;
+                enabled: boolean;
+                manifestId: string;
+                package: {
+                    id: string;
+                };
+            }>;
+            author?: {
+                name?: string | undefined | null;
+                email?: string | undefined | null;
+                url?: string | undefined | null;
+            } | undefined | null;
+        };
+    };
+};
+export type DeletedPluginPackageSubscriptionVariables = Exact<{
+    [key: string]: never;
+}>;
+export type DeletedPluginPackageSubscription = {
+    deletedPluginPackage: {
+        deletedPackageId: string;
+    };
+};
+export type UpdatedPluginSubscriptionVariables = Exact<{
+    [key: string]: never;
+}>;
+export type UpdatedPluginSubscription = {
+    updatedPlugin: {
+        plugin: {
+            __typename: "PluginFrontend";
+            data?: JSONValue | undefined | null;
+            entrypoint?: string | undefined | null;
+            style?: string | undefined | null;
+            id: string;
+            name?: string | undefined | null;
+            enabled: boolean;
+            manifestId: string;
+            package: {
+                id: string;
+            };
+        };
+    };
+};
 export type CreatedProjectSubscriptionVariables = Exact<{
     [key: string]: never;
 }>;
@@ -11576,44 +12088,41 @@ export type UpdatedReplaySessionSubscription = {
                     id: string;
                 };
                 entries: {
-                    edges: Array<{
-                        cursor: string;
-                        node: {
-                            __typename: "ReplayEntry";
+                    nodes: Array<{
+                        __typename: "ReplayEntry";
+                        id: string;
+                        error?: string | undefined | null;
+                        sessionId: string;
+                        request: {
+                            __typename: "Request";
                             id: string;
-                            error?: string | undefined | null;
-                            sessionId: string;
-                            request: {
-                                __typename: "Request";
+                            host: string;
+                            port: number;
+                            path: string;
+                            query: string;
+                            method: string;
+                            edited: boolean;
+                            isTls: boolean;
+                            length: number;
+                            alteration: Alteration;
+                            fileExtension?: string | undefined | null;
+                            source: Source;
+                            createdAt: Date;
+                            metadata: {
+                                __typename: "RequestMetadata";
                                 id: string;
-                                host: string;
-                                port: number;
-                                path: string;
-                                query: string;
-                                method: string;
-                                edited: boolean;
-                                isTls: boolean;
-                                length: number;
-                                alteration: Alteration;
-                                fileExtension?: string | undefined | null;
-                                source: Source;
-                                createdAt: Date;
-                                metadata: {
-                                    __typename: "RequestMetadata";
-                                    id: string;
-                                    color?: string | undefined | null;
-                                };
-                                response?: {
-                                    __typename: "Response";
-                                    id: string;
-                                    statusCode: number;
-                                    roundtripTime: number;
-                                    length: number;
-                                    createdAt: Date;
-                                    alteration: Alteration;
-                                    edited: boolean;
-                                } | undefined | null;
+                                color?: string | undefined | null;
                             };
+                            response?: {
+                                __typename: "Response";
+                                id: string;
+                                statusCode: number;
+                                roundtripTime: number;
+                                length: number;
+                                createdAt: Date;
+                                alteration: Alteration;
+                                edited: boolean;
+                            } | undefined | null;
                         };
                     }>;
                     pageInfo: {
@@ -12068,6 +12577,8 @@ export type FinishedTaskSubscription = {
             code: string;
         } | {
             code: string;
+        } | {
+            code: string;
         } | undefined | null;
     };
 };
@@ -12080,7 +12591,7 @@ export type CreatedWorkflowSubscription = {
             cursor: string;
             node: {
                 __typename: "Workflow";
-                definition: Record<string, unknown>;
+                definition: JSONValue;
                 id: string;
                 kind: WorkflowKind;
                 name: string;
@@ -12107,7 +12618,7 @@ export type UpdatedWorkflowSubscription = {
             cursor: string;
             node: {
                 __typename: "Workflow";
-                definition: Record<string, unknown>;
+                definition: JSONValue;
                 id: string;
                 kind: WorkflowKind;
                 name: string;
@@ -12135,7 +12646,12 @@ export declare const RetryOnFailureSettingFullFragmentDoc = "\n    fragment retr
 export declare const SimpleListPayloadOptionsFullFragmentDoc = "\n    fragment simpleListPayloadOptionsFull on AutomateSimpleListPayload {\n  __typename\n  list\n}\n    ";
 export declare const HostedFilePayloadOptionsFullFragmentDoc = "\n    fragment hostedFilePayloadOptionsFull on AutomateHostedFilePayload {\n  __typename\n  id\n  delimiter\n}\n    ";
 export declare const NullPayloadOptionsFullFragmentDoc = "\n    fragment nullPayloadOptionsFull on AutomateNullPayload {\n  __typename\n  quantity\n}\n    ";
-export declare const AutomatePayloadFullFragmentDoc = "\n    fragment automatePayloadFull on AutomatePayload {\n  __typename\n  kind\n  options {\n    ... on AutomateSimpleListPayload {\n      ...simpleListPayloadOptionsFull\n    }\n    ... on AutomateHostedFilePayload {\n      ...hostedFilePayloadOptionsFull\n    }\n    ... on AutomateNullPayload {\n      ...nullPayloadOptionsFull\n    }\n  }\n  preprocessors {\n    __typename\n    kind\n    options {\n      ... on AutomatePrefixPreprocessor {\n        value\n      }\n      ... on AutomateSuffixPreprocessor {\n        value\n      }\n    }\n  }\n  urlEncode {\n    __typename\n    charset\n    enabled\n    nonAscii\n  }\n}\n    ";
+export declare const AutomatePrefixPreprocessorFullFragmentDoc = "\n    fragment automatePrefixPreprocessorFull on AutomatePrefixPreprocessor {\n  __typename\n  value\n}\n    ";
+export declare const AutomateSuffixPreprocessorFullFragmentDoc = "\n    fragment automateSuffixPreprocessorFull on AutomateSuffixPreprocessor {\n  __typename\n  value\n}\n    ";
+export declare const AutomateWorkflowPreprocessorFullFragmentDoc = "\n    fragment automateWorkflowPreprocessorFull on AutomateWorkflowPreprocessor {\n  __typename\n  id\n}\n    ";
+export declare const AutomateUrlEncodePreprocessorFullFragmentDoc = "\n    fragment automateUrlEncodePreprocessorFull on AutomateUrlEncodePreprocessor {\n  __typename\n  charset\n  nonAscii\n}\n    ";
+export declare const AutomatePreprocessorFullFragmentDoc = "\n    fragment automatePreprocessorFull on AutomatePreprocessor {\n  __typename\n  options {\n    ... on AutomatePrefixPreprocessor {\n      ...automatePrefixPreprocessorFull\n    }\n    ... on AutomateSuffixPreprocessor {\n      ...automateSuffixPreprocessorFull\n    }\n    ... on AutomateWorkflowPreprocessor {\n      ...automateWorkflowPreprocessorFull\n    }\n    ... on AutomateUrlEncodePreprocessor {\n      ...automateUrlEncodePreprocessorFull\n    }\n  }\n}\n    ";
+export declare const AutomatePayloadFullFragmentDoc = "\n    fragment automatePayloadFull on AutomatePayload {\n  __typename\n  options {\n    ... on AutomateSimpleListPayload {\n      ...simpleListPayloadOptionsFull\n    }\n    ... on AutomateHostedFilePayload {\n      ...hostedFilePayloadOptionsFull\n    }\n    ... on AutomateNullPayload {\n      ...nullPayloadOptionsFull\n    }\n  }\n  preprocessors {\n    ...automatePreprocessorFull\n  }\n}\n    ";
 export declare const AutomatePlaceholderFullFragmentDoc = "\n    fragment automatePlaceholderFull on AutomatePlaceholder {\n  __typename\n  start\n  end\n}\n    ";
 export declare const AutomateSettingsFullFragmentDoc = "\n    fragment automateSettingsFull on AutomateSettings {\n  __typename\n  closeConnection\n  updateContentLength\n  strategy\n  concurrency {\n    ...concurrencySettingFull\n  }\n  retryOnFailure {\n    ...retryOnFailureSettingFull\n  }\n  payloads {\n    ...automatePayloadFull\n  }\n  placeholders {\n    ...automatePlaceholderFull\n  }\n}\n    ";
 export declare const AutomateEntryFullFragmentDoc = "\n    fragment automateEntryFull on AutomateEntry {\n  ...automateEntryMeta\n  settings {\n    ...automateSettingsFull\n  }\n}\n    ";
@@ -12174,6 +12690,7 @@ export declare const PermissionDeniedUserErrorFullFragmentDoc = "\n    fragment 
 export declare const WorkflowUserErrorFullFragmentDoc = "\n    fragment workflowUserErrorFull on WorkflowUserError {\n  ...userErrorFull\n  nodeId\n  message\n  reason\n}\n    ";
 export declare const InvalidGlobTermsUserErrorFullFragmentDoc = "\n    fragment invalidGlobTermsUserErrorFull on InvalidGlobTermsUserError {\n  ...userErrorFull\n  terms\n}\n    ";
 export declare const InvalidHttpqlUserErrorFullFragmentDoc = "\n    fragment invalidHTTPQLUserErrorFull on InvalidHTTPQLUserError {\n  ...userErrorFull\n  query\n}\n    ";
+export declare const PluginUserErrorFullFragmentDoc = "\n    fragment pluginUserErrorFull on PluginUserError {\n  ...userErrorFull\n  reason\n}\n    ";
 export declare const DataExportMetaFieldsFragmentDoc = "\n    fragment dataExportMetaFields on DataExport {\n  __typename\n  id\n  name\n  path\n  size\n  status\n  format\n  error\n  createdAt\n}\n    ";
 export declare const DataExportMetaFragmentDoc = "\n    fragment dataExportMeta on DataExport {\n  ...dataExportMetaFields\n}\n    ";
 export declare const DataExportFullFieldsFragmentDoc = "\n    fragment dataExportFullFields on DataExport {\n  ...dataExportMeta\n  downloadUri\n}\n    ";
@@ -12201,10 +12718,16 @@ export declare const InterceptScopeOptionsMetaFragmentDoc = "\n    fragment inte
 export declare const InterceptOptionsMetaFragmentDoc = "\n    fragment interceptOptionsMeta on InterceptOptions {\n  request {\n    ...interceptRequestOptionsMeta\n  }\n  response {\n    ...interceptResponseOptionsMeta\n  }\n  scope {\n    ...interceptScopeOptionsMeta\n  }\n}\n    ";
 export declare const UpstreamProxyAuthBasicFullFragmentDoc = "\n    fragment upstreamProxyAuthBasicFull on UpstreamProxyAuthBasic {\n  __typename\n  username\n  password\n}\n    ";
 export declare const UpstreamProxyFullFragmentDoc = "\n    fragment upstreamProxyFull on UpstreamProxy {\n  __typename\n  id\n  allowlist\n  denylist\n  auth {\n    ... on UpstreamProxyAuthBasic {\n      ...upstreamProxyAuthBasicFull\n    }\n  }\n  enabled\n  host\n  kind\n  port\n  rank\n}\n    ";
+export declare const PluginAuthorFullFragmentDoc = "\n    fragment pluginAuthorFull on PluginAuthor {\n  name\n  email\n  url\n}\n    ";
+export declare const PluginPackageMetaFragmentDoc = "\n    fragment pluginPackageMeta on PluginPackage {\n  id\n  name\n  description\n  author {\n    ...pluginAuthorFull\n  }\n  version\n  installedAt\n  manifestId\n}\n    ";
+export declare const PluginMetaFragmentDoc = "\n    fragment pluginMeta on Plugin {\n  __typename\n  id\n  name\n  enabled\n  manifestId\n  package {\n    id\n  }\n}\n    ";
+export declare const PluginFrontendMetaFragmentDoc = "\n    fragment pluginFrontendMeta on PluginFrontend {\n  ...pluginMeta\n  entrypoint\n  style\n}\n    ";
+export declare const PluginFrontendFullFragmentDoc = "\n    fragment pluginFrontendFull on PluginFrontend {\n  ...pluginFrontendMeta\n  data\n}\n    ";
+export declare const PluginPackageFullFragmentDoc = "\n    fragment pluginPackageFull on PluginPackage {\n  ...pluginPackageMeta\n  plugins {\n    ... on PluginFrontend {\n      ...pluginFrontendFull\n    }\n  }\n}\n    ";
 export declare const ReplayEntryMetaFragmentDoc = "\n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    ";
 export declare const PageInfoFullFragmentDoc = "\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    ";
 export declare const CountFullFragmentDoc = "\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
-export declare const ReplaySessionMetaFragmentDoc = "\n    fragment replaySessionMeta on ReplaySession {\n  __typename\n  id\n  name\n  activeEntry {\n    ...replayEntryMeta\n  }\n  collection {\n    id\n  }\n  entries {\n    edges {\n      cursor\n      node {\n        ...replayEntryMeta\n      }\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n    count {\n      ...countFull\n    }\n  }\n}\n    ";
+export declare const ReplaySessionMetaFragmentDoc = "\n    fragment replaySessionMeta on ReplaySession {\n  __typename\n  id\n  name\n  activeEntry {\n    ...replayEntryMeta\n  }\n  collection {\n    id\n  }\n  entries {\n    nodes {\n      ...replayEntryMeta\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n    count {\n      ...countFull\n    }\n  }\n}\n    ";
 export declare const ReplaySessionCollectionMetaFragmentDoc = "\n    fragment replaySessionCollectionMeta on ReplaySessionCollection {\n  __typename\n  id\n  name\n  sessions {\n    ...replaySessionMeta\n  }\n}\n    ";
 export declare const ReplayTaskMetaFragmentDoc = "\n    fragment replayTaskMeta on ReplayTask {\n  __typename\n  id\n  error\n  replayEntry {\n    ...replayEntryMeta\n  }\n}\n    ";
 export declare const ReplayTaskEdgeMetaFragmentDoc = "\n    fragment replayTaskEdgeMeta on ReplayTaskEdge {\n  __typename\n  node {\n    ...replayTaskMeta\n  }\n  cursor\n}\n    ";
@@ -12237,11 +12760,11 @@ export declare const StartAuthenticationFlowDocument = "\n    mutation startAuth
 export declare const RefreshAuthenticationTokenDocument = "\n    mutation refreshAuthenticationToken($refreshToken: Token!) {\n  refreshAuthenticationToken(refreshToken: $refreshToken) {\n    token {\n      ...authenticationTokenFull\n    }\n  }\n}\n    \n    fragment authenticationTokenFull on AuthenticationToken {\n  __typename\n  accessToken\n  expiresAt\n  refreshToken\n  scopes\n}\n    ";
 export declare const LogoutDocument = "\n    mutation logout {\n  logout {\n    success\n  }\n}\n    ";
 export declare const DeleteAutomateEntriesDocument = "\n    mutation deleteAutomateEntries($ids: [ID!]!) {\n  deleteAutomateEntries(ids: $ids) {\n    deletedIds\n    errors {\n      ... on TaskInProgressUserError {\n        ...taskInProgressUserErrorFull\n      }\n      ... on OtherUserError {\n        ...otherUserErrorFull\n      }\n    }\n  }\n}\n    \n    fragment taskInProgressUserErrorFull on TaskInProgressUserError {\n  ...userErrorFull\n  taskId\n}\n    \n\n    fragment userErrorFull on UserError {\n  __typename\n  code\n}\n    \n\n    fragment otherUserErrorFull on OtherUserError {\n  ...userErrorFull\n}\n    ";
-export declare const RenameAutomateEntryDocument = "\n    mutation renameAutomateEntry($id: ID!, $name: String!) {\n  renameAutomateEntry(id: $id, name: $name) {\n    entry {\n      ...automateEntryFull\n    }\n  }\n}\n    \n    fragment automateEntryFull on AutomateEntry {\n  ...automateEntryMeta\n  settings {\n    ...automateSettingsFull\n  }\n}\n    \n\n    fragment automateEntryMeta on AutomateEntry {\n  __typename\n  id\n  name\n  createdAt\n  session {\n    id\n  }\n}\n    \n\n    fragment automateSettingsFull on AutomateSettings {\n  __typename\n  closeConnection\n  updateContentLength\n  strategy\n  concurrency {\n    ...concurrencySettingFull\n  }\n  retryOnFailure {\n    ...retryOnFailureSettingFull\n  }\n  payloads {\n    ...automatePayloadFull\n  }\n  placeholders {\n    ...automatePlaceholderFull\n  }\n}\n    \n\n    fragment concurrencySettingFull on AutomateConcurrencySetting {\n  __typename\n  delay\n  workers\n}\n    \n\n    fragment retryOnFailureSettingFull on AutomateRetryOnFailureSetting {\n  __typename\n  backoff\n  maximumRetries\n}\n    \n\n    fragment automatePayloadFull on AutomatePayload {\n  __typename\n  kind\n  options {\n    ... on AutomateSimpleListPayload {\n      ...simpleListPayloadOptionsFull\n    }\n    ... on AutomateHostedFilePayload {\n      ...hostedFilePayloadOptionsFull\n    }\n    ... on AutomateNullPayload {\n      ...nullPayloadOptionsFull\n    }\n  }\n  preprocessors {\n    __typename\n    kind\n    options {\n      ... on AutomatePrefixPreprocessor {\n        value\n      }\n      ... on AutomateSuffixPreprocessor {\n        value\n      }\n    }\n  }\n  urlEncode {\n    __typename\n    charset\n    enabled\n    nonAscii\n  }\n}\n    \n\n    fragment simpleListPayloadOptionsFull on AutomateSimpleListPayload {\n  __typename\n  list\n}\n    \n\n    fragment hostedFilePayloadOptionsFull on AutomateHostedFilePayload {\n  __typename\n  id\n  delimiter\n}\n    \n\n    fragment nullPayloadOptionsFull on AutomateNullPayload {\n  __typename\n  quantity\n}\n    \n\n    fragment automatePlaceholderFull on AutomatePlaceholder {\n  __typename\n  start\n  end\n}\n    ";
-export declare const CreateAutomateSessionDocument = "\n    mutation createAutomateSession($input: CreateAutomateSessionInput!) {\n  createAutomateSession(input: $input) {\n    session {\n      ...automateSessionFull\n    }\n  }\n}\n    \n    fragment automateSessionFull on AutomateSession {\n  ...automateSessionMeta\n  connection {\n    ...connectionInfoFull\n  }\n  settings {\n    ...automateSettingsFull\n  }\n  raw\n}\n    \n\n    fragment automateSessionMeta on AutomateSession {\n  __typename\n  id\n  name\n  createdAt\n  entries {\n    ...automateEntryMeta\n  }\n}\n    \n\n    fragment automateEntryMeta on AutomateEntry {\n  __typename\n  id\n  name\n  createdAt\n  session {\n    id\n  }\n}\n    \n\n    fragment connectionInfoFull on ConnectionInfo {\n  __typename\n  host\n  port\n  isTls\n}\n    \n\n    fragment automateSettingsFull on AutomateSettings {\n  __typename\n  closeConnection\n  updateContentLength\n  strategy\n  concurrency {\n    ...concurrencySettingFull\n  }\n  retryOnFailure {\n    ...retryOnFailureSettingFull\n  }\n  payloads {\n    ...automatePayloadFull\n  }\n  placeholders {\n    ...automatePlaceholderFull\n  }\n}\n    \n\n    fragment concurrencySettingFull on AutomateConcurrencySetting {\n  __typename\n  delay\n  workers\n}\n    \n\n    fragment retryOnFailureSettingFull on AutomateRetryOnFailureSetting {\n  __typename\n  backoff\n  maximumRetries\n}\n    \n\n    fragment automatePayloadFull on AutomatePayload {\n  __typename\n  kind\n  options {\n    ... on AutomateSimpleListPayload {\n      ...simpleListPayloadOptionsFull\n    }\n    ... on AutomateHostedFilePayload {\n      ...hostedFilePayloadOptionsFull\n    }\n    ... on AutomateNullPayload {\n      ...nullPayloadOptionsFull\n    }\n  }\n  preprocessors {\n    __typename\n    kind\n    options {\n      ... on AutomatePrefixPreprocessor {\n        value\n      }\n      ... on AutomateSuffixPreprocessor {\n        value\n      }\n    }\n  }\n  urlEncode {\n    __typename\n    charset\n    enabled\n    nonAscii\n  }\n}\n    \n\n    fragment simpleListPayloadOptionsFull on AutomateSimpleListPayload {\n  __typename\n  list\n}\n    \n\n    fragment hostedFilePayloadOptionsFull on AutomateHostedFilePayload {\n  __typename\n  id\n  delimiter\n}\n    \n\n    fragment nullPayloadOptionsFull on AutomateNullPayload {\n  __typename\n  quantity\n}\n    \n\n    fragment automatePlaceholderFull on AutomatePlaceholder {\n  __typename\n  start\n  end\n}\n    ";
+export declare const RenameAutomateEntryDocument = "\n    mutation renameAutomateEntry($id: ID!, $name: String!) {\n  renameAutomateEntry(id: $id, name: $name) {\n    entry {\n      ...automateEntryFull\n    }\n  }\n}\n    \n    fragment automateEntryFull on AutomateEntry {\n  ...automateEntryMeta\n  settings {\n    ...automateSettingsFull\n  }\n}\n    \n\n    fragment automateEntryMeta on AutomateEntry {\n  __typename\n  id\n  name\n  createdAt\n  session {\n    id\n  }\n}\n    \n\n    fragment automateSettingsFull on AutomateSettings {\n  __typename\n  closeConnection\n  updateContentLength\n  strategy\n  concurrency {\n    ...concurrencySettingFull\n  }\n  retryOnFailure {\n    ...retryOnFailureSettingFull\n  }\n  payloads {\n    ...automatePayloadFull\n  }\n  placeholders {\n    ...automatePlaceholderFull\n  }\n}\n    \n\n    fragment concurrencySettingFull on AutomateConcurrencySetting {\n  __typename\n  delay\n  workers\n}\n    \n\n    fragment retryOnFailureSettingFull on AutomateRetryOnFailureSetting {\n  __typename\n  backoff\n  maximumRetries\n}\n    \n\n    fragment automatePayloadFull on AutomatePayload {\n  __typename\n  options {\n    ... on AutomateSimpleListPayload {\n      ...simpleListPayloadOptionsFull\n    }\n    ... on AutomateHostedFilePayload {\n      ...hostedFilePayloadOptionsFull\n    }\n    ... on AutomateNullPayload {\n      ...nullPayloadOptionsFull\n    }\n  }\n  preprocessors {\n    ...automatePreprocessorFull\n  }\n}\n    \n\n    fragment simpleListPayloadOptionsFull on AutomateSimpleListPayload {\n  __typename\n  list\n}\n    \n\n    fragment hostedFilePayloadOptionsFull on AutomateHostedFilePayload {\n  __typename\n  id\n  delimiter\n}\n    \n\n    fragment nullPayloadOptionsFull on AutomateNullPayload {\n  __typename\n  quantity\n}\n    \n\n    fragment automatePreprocessorFull on AutomatePreprocessor {\n  __typename\n  options {\n    ... on AutomatePrefixPreprocessor {\n      ...automatePrefixPreprocessorFull\n    }\n    ... on AutomateSuffixPreprocessor {\n      ...automateSuffixPreprocessorFull\n    }\n    ... on AutomateWorkflowPreprocessor {\n      ...automateWorkflowPreprocessorFull\n    }\n    ... on AutomateUrlEncodePreprocessor {\n      ...automateUrlEncodePreprocessorFull\n    }\n  }\n}\n    \n\n    fragment automatePrefixPreprocessorFull on AutomatePrefixPreprocessor {\n  __typename\n  value\n}\n    \n\n    fragment automateSuffixPreprocessorFull on AutomateSuffixPreprocessor {\n  __typename\n  value\n}\n    \n\n    fragment automateWorkflowPreprocessorFull on AutomateWorkflowPreprocessor {\n  __typename\n  id\n}\n    \n\n    fragment automateUrlEncodePreprocessorFull on AutomateUrlEncodePreprocessor {\n  __typename\n  charset\n  nonAscii\n}\n    \n\n    fragment automatePlaceholderFull on AutomatePlaceholder {\n  __typename\n  start\n  end\n}\n    ";
+export declare const CreateAutomateSessionDocument = "\n    mutation createAutomateSession($input: CreateAutomateSessionInput!) {\n  createAutomateSession(input: $input) {\n    session {\n      ...automateSessionFull\n    }\n  }\n}\n    \n    fragment automateSessionFull on AutomateSession {\n  ...automateSessionMeta\n  connection {\n    ...connectionInfoFull\n  }\n  settings {\n    ...automateSettingsFull\n  }\n  raw\n}\n    \n\n    fragment automateSessionMeta on AutomateSession {\n  __typename\n  id\n  name\n  createdAt\n  entries {\n    ...automateEntryMeta\n  }\n}\n    \n\n    fragment automateEntryMeta on AutomateEntry {\n  __typename\n  id\n  name\n  createdAt\n  session {\n    id\n  }\n}\n    \n\n    fragment connectionInfoFull on ConnectionInfo {\n  __typename\n  host\n  port\n  isTls\n}\n    \n\n    fragment automateSettingsFull on AutomateSettings {\n  __typename\n  closeConnection\n  updateContentLength\n  strategy\n  concurrency {\n    ...concurrencySettingFull\n  }\n  retryOnFailure {\n    ...retryOnFailureSettingFull\n  }\n  payloads {\n    ...automatePayloadFull\n  }\n  placeholders {\n    ...automatePlaceholderFull\n  }\n}\n    \n\n    fragment concurrencySettingFull on AutomateConcurrencySetting {\n  __typename\n  delay\n  workers\n}\n    \n\n    fragment retryOnFailureSettingFull on AutomateRetryOnFailureSetting {\n  __typename\n  backoff\n  maximumRetries\n}\n    \n\n    fragment automatePayloadFull on AutomatePayload {\n  __typename\n  options {\n    ... on AutomateSimpleListPayload {\n      ...simpleListPayloadOptionsFull\n    }\n    ... on AutomateHostedFilePayload {\n      ...hostedFilePayloadOptionsFull\n    }\n    ... on AutomateNullPayload {\n      ...nullPayloadOptionsFull\n    }\n  }\n  preprocessors {\n    ...automatePreprocessorFull\n  }\n}\n    \n\n    fragment simpleListPayloadOptionsFull on AutomateSimpleListPayload {\n  __typename\n  list\n}\n    \n\n    fragment hostedFilePayloadOptionsFull on AutomateHostedFilePayload {\n  __typename\n  id\n  delimiter\n}\n    \n\n    fragment nullPayloadOptionsFull on AutomateNullPayload {\n  __typename\n  quantity\n}\n    \n\n    fragment automatePreprocessorFull on AutomatePreprocessor {\n  __typename\n  options {\n    ... on AutomatePrefixPreprocessor {\n      ...automatePrefixPreprocessorFull\n    }\n    ... on AutomateSuffixPreprocessor {\n      ...automateSuffixPreprocessorFull\n    }\n    ... on AutomateWorkflowPreprocessor {\n      ...automateWorkflowPreprocessorFull\n    }\n    ... on AutomateUrlEncodePreprocessor {\n      ...automateUrlEncodePreprocessorFull\n    }\n  }\n}\n    \n\n    fragment automatePrefixPreprocessorFull on AutomatePrefixPreprocessor {\n  __typename\n  value\n}\n    \n\n    fragment automateSuffixPreprocessorFull on AutomateSuffixPreprocessor {\n  __typename\n  value\n}\n    \n\n    fragment automateWorkflowPreprocessorFull on AutomateWorkflowPreprocessor {\n  __typename\n  id\n}\n    \n\n    fragment automateUrlEncodePreprocessorFull on AutomateUrlEncodePreprocessor {\n  __typename\n  charset\n  nonAscii\n}\n    \n\n    fragment automatePlaceholderFull on AutomatePlaceholder {\n  __typename\n  start\n  end\n}\n    ";
 export declare const DeleteAutomateSessionDocument = "\n    mutation deleteAutomateSession($id: ID!) {\n  deleteAutomateSession(id: $id) {\n    deletedId\n  }\n}\n    ";
-export declare const RenameAutomateSessionDocument = "\n    mutation renameAutomateSession($id: ID!, $name: String!) {\n  renameAutomateSession(id: $id, name: $name) {\n    session {\n      ...automateSessionFull\n    }\n  }\n}\n    \n    fragment automateSessionFull on AutomateSession {\n  ...automateSessionMeta\n  connection {\n    ...connectionInfoFull\n  }\n  settings {\n    ...automateSettingsFull\n  }\n  raw\n}\n    \n\n    fragment automateSessionMeta on AutomateSession {\n  __typename\n  id\n  name\n  createdAt\n  entries {\n    ...automateEntryMeta\n  }\n}\n    \n\n    fragment automateEntryMeta on AutomateEntry {\n  __typename\n  id\n  name\n  createdAt\n  session {\n    id\n  }\n}\n    \n\n    fragment connectionInfoFull on ConnectionInfo {\n  __typename\n  host\n  port\n  isTls\n}\n    \n\n    fragment automateSettingsFull on AutomateSettings {\n  __typename\n  closeConnection\n  updateContentLength\n  strategy\n  concurrency {\n    ...concurrencySettingFull\n  }\n  retryOnFailure {\n    ...retryOnFailureSettingFull\n  }\n  payloads {\n    ...automatePayloadFull\n  }\n  placeholders {\n    ...automatePlaceholderFull\n  }\n}\n    \n\n    fragment concurrencySettingFull on AutomateConcurrencySetting {\n  __typename\n  delay\n  workers\n}\n    \n\n    fragment retryOnFailureSettingFull on AutomateRetryOnFailureSetting {\n  __typename\n  backoff\n  maximumRetries\n}\n    \n\n    fragment automatePayloadFull on AutomatePayload {\n  __typename\n  kind\n  options {\n    ... on AutomateSimpleListPayload {\n      ...simpleListPayloadOptionsFull\n    }\n    ... on AutomateHostedFilePayload {\n      ...hostedFilePayloadOptionsFull\n    }\n    ... on AutomateNullPayload {\n      ...nullPayloadOptionsFull\n    }\n  }\n  preprocessors {\n    __typename\n    kind\n    options {\n      ... on AutomatePrefixPreprocessor {\n        value\n      }\n      ... on AutomateSuffixPreprocessor {\n        value\n      }\n    }\n  }\n  urlEncode {\n    __typename\n    charset\n    enabled\n    nonAscii\n  }\n}\n    \n\n    fragment simpleListPayloadOptionsFull on AutomateSimpleListPayload {\n  __typename\n  list\n}\n    \n\n    fragment hostedFilePayloadOptionsFull on AutomateHostedFilePayload {\n  __typename\n  id\n  delimiter\n}\n    \n\n    fragment nullPayloadOptionsFull on AutomateNullPayload {\n  __typename\n  quantity\n}\n    \n\n    fragment automatePlaceholderFull on AutomatePlaceholder {\n  __typename\n  start\n  end\n}\n    ";
-export declare const UpdateAutomateSessionDocument = "\n    mutation updateAutomateSession($id: ID!, $input: UpdateAutomateSessionInput!) {\n  updateAutomateSession(id: $id, input: $input) {\n    session {\n      ...automateSessionFull\n    }\n  }\n}\n    \n    fragment automateSessionFull on AutomateSession {\n  ...automateSessionMeta\n  connection {\n    ...connectionInfoFull\n  }\n  settings {\n    ...automateSettingsFull\n  }\n  raw\n}\n    \n\n    fragment automateSessionMeta on AutomateSession {\n  __typename\n  id\n  name\n  createdAt\n  entries {\n    ...automateEntryMeta\n  }\n}\n    \n\n    fragment automateEntryMeta on AutomateEntry {\n  __typename\n  id\n  name\n  createdAt\n  session {\n    id\n  }\n}\n    \n\n    fragment connectionInfoFull on ConnectionInfo {\n  __typename\n  host\n  port\n  isTls\n}\n    \n\n    fragment automateSettingsFull on AutomateSettings {\n  __typename\n  closeConnection\n  updateContentLength\n  strategy\n  concurrency {\n    ...concurrencySettingFull\n  }\n  retryOnFailure {\n    ...retryOnFailureSettingFull\n  }\n  payloads {\n    ...automatePayloadFull\n  }\n  placeholders {\n    ...automatePlaceholderFull\n  }\n}\n    \n\n    fragment concurrencySettingFull on AutomateConcurrencySetting {\n  __typename\n  delay\n  workers\n}\n    \n\n    fragment retryOnFailureSettingFull on AutomateRetryOnFailureSetting {\n  __typename\n  backoff\n  maximumRetries\n}\n    \n\n    fragment automatePayloadFull on AutomatePayload {\n  __typename\n  kind\n  options {\n    ... on AutomateSimpleListPayload {\n      ...simpleListPayloadOptionsFull\n    }\n    ... on AutomateHostedFilePayload {\n      ...hostedFilePayloadOptionsFull\n    }\n    ... on AutomateNullPayload {\n      ...nullPayloadOptionsFull\n    }\n  }\n  preprocessors {\n    __typename\n    kind\n    options {\n      ... on AutomatePrefixPreprocessor {\n        value\n      }\n      ... on AutomateSuffixPreprocessor {\n        value\n      }\n    }\n  }\n  urlEncode {\n    __typename\n    charset\n    enabled\n    nonAscii\n  }\n}\n    \n\n    fragment simpleListPayloadOptionsFull on AutomateSimpleListPayload {\n  __typename\n  list\n}\n    \n\n    fragment hostedFilePayloadOptionsFull on AutomateHostedFilePayload {\n  __typename\n  id\n  delimiter\n}\n    \n\n    fragment nullPayloadOptionsFull on AutomateNullPayload {\n  __typename\n  quantity\n}\n    \n\n    fragment automatePlaceholderFull on AutomatePlaceholder {\n  __typename\n  start\n  end\n}\n    ";
+export declare const RenameAutomateSessionDocument = "\n    mutation renameAutomateSession($id: ID!, $name: String!) {\n  renameAutomateSession(id: $id, name: $name) {\n    session {\n      ...automateSessionFull\n    }\n  }\n}\n    \n    fragment automateSessionFull on AutomateSession {\n  ...automateSessionMeta\n  connection {\n    ...connectionInfoFull\n  }\n  settings {\n    ...automateSettingsFull\n  }\n  raw\n}\n    \n\n    fragment automateSessionMeta on AutomateSession {\n  __typename\n  id\n  name\n  createdAt\n  entries {\n    ...automateEntryMeta\n  }\n}\n    \n\n    fragment automateEntryMeta on AutomateEntry {\n  __typename\n  id\n  name\n  createdAt\n  session {\n    id\n  }\n}\n    \n\n    fragment connectionInfoFull on ConnectionInfo {\n  __typename\n  host\n  port\n  isTls\n}\n    \n\n    fragment automateSettingsFull on AutomateSettings {\n  __typename\n  closeConnection\n  updateContentLength\n  strategy\n  concurrency {\n    ...concurrencySettingFull\n  }\n  retryOnFailure {\n    ...retryOnFailureSettingFull\n  }\n  payloads {\n    ...automatePayloadFull\n  }\n  placeholders {\n    ...automatePlaceholderFull\n  }\n}\n    \n\n    fragment concurrencySettingFull on AutomateConcurrencySetting {\n  __typename\n  delay\n  workers\n}\n    \n\n    fragment retryOnFailureSettingFull on AutomateRetryOnFailureSetting {\n  __typename\n  backoff\n  maximumRetries\n}\n    \n\n    fragment automatePayloadFull on AutomatePayload {\n  __typename\n  options {\n    ... on AutomateSimpleListPayload {\n      ...simpleListPayloadOptionsFull\n    }\n    ... on AutomateHostedFilePayload {\n      ...hostedFilePayloadOptionsFull\n    }\n    ... on AutomateNullPayload {\n      ...nullPayloadOptionsFull\n    }\n  }\n  preprocessors {\n    ...automatePreprocessorFull\n  }\n}\n    \n\n    fragment simpleListPayloadOptionsFull on AutomateSimpleListPayload {\n  __typename\n  list\n}\n    \n\n    fragment hostedFilePayloadOptionsFull on AutomateHostedFilePayload {\n  __typename\n  id\n  delimiter\n}\n    \n\n    fragment nullPayloadOptionsFull on AutomateNullPayload {\n  __typename\n  quantity\n}\n    \n\n    fragment automatePreprocessorFull on AutomatePreprocessor {\n  __typename\n  options {\n    ... on AutomatePrefixPreprocessor {\n      ...automatePrefixPreprocessorFull\n    }\n    ... on AutomateSuffixPreprocessor {\n      ...automateSuffixPreprocessorFull\n    }\n    ... on AutomateWorkflowPreprocessor {\n      ...automateWorkflowPreprocessorFull\n    }\n    ... on AutomateUrlEncodePreprocessor {\n      ...automateUrlEncodePreprocessorFull\n    }\n  }\n}\n    \n\n    fragment automatePrefixPreprocessorFull on AutomatePrefixPreprocessor {\n  __typename\n  value\n}\n    \n\n    fragment automateSuffixPreprocessorFull on AutomateSuffixPreprocessor {\n  __typename\n  value\n}\n    \n\n    fragment automateWorkflowPreprocessorFull on AutomateWorkflowPreprocessor {\n  __typename\n  id\n}\n    \n\n    fragment automateUrlEncodePreprocessorFull on AutomateUrlEncodePreprocessor {\n  __typename\n  charset\n  nonAscii\n}\n    \n\n    fragment automatePlaceholderFull on AutomatePlaceholder {\n  __typename\n  start\n  end\n}\n    ";
+export declare const UpdateAutomateSessionDocument = "\n    mutation updateAutomateSession($id: ID!, $input: UpdateAutomateSessionInput!) {\n  updateAutomateSession(id: $id, input: $input) {\n    session {\n      ...automateSessionFull\n    }\n  }\n}\n    \n    fragment automateSessionFull on AutomateSession {\n  ...automateSessionMeta\n  connection {\n    ...connectionInfoFull\n  }\n  settings {\n    ...automateSettingsFull\n  }\n  raw\n}\n    \n\n    fragment automateSessionMeta on AutomateSession {\n  __typename\n  id\n  name\n  createdAt\n  entries {\n    ...automateEntryMeta\n  }\n}\n    \n\n    fragment automateEntryMeta on AutomateEntry {\n  __typename\n  id\n  name\n  createdAt\n  session {\n    id\n  }\n}\n    \n\n    fragment connectionInfoFull on ConnectionInfo {\n  __typename\n  host\n  port\n  isTls\n}\n    \n\n    fragment automateSettingsFull on AutomateSettings {\n  __typename\n  closeConnection\n  updateContentLength\n  strategy\n  concurrency {\n    ...concurrencySettingFull\n  }\n  retryOnFailure {\n    ...retryOnFailureSettingFull\n  }\n  payloads {\n    ...automatePayloadFull\n  }\n  placeholders {\n    ...automatePlaceholderFull\n  }\n}\n    \n\n    fragment concurrencySettingFull on AutomateConcurrencySetting {\n  __typename\n  delay\n  workers\n}\n    \n\n    fragment retryOnFailureSettingFull on AutomateRetryOnFailureSetting {\n  __typename\n  backoff\n  maximumRetries\n}\n    \n\n    fragment automatePayloadFull on AutomatePayload {\n  __typename\n  options {\n    ... on AutomateSimpleListPayload {\n      ...simpleListPayloadOptionsFull\n    }\n    ... on AutomateHostedFilePayload {\n      ...hostedFilePayloadOptionsFull\n    }\n    ... on AutomateNullPayload {\n      ...nullPayloadOptionsFull\n    }\n  }\n  preprocessors {\n    ...automatePreprocessorFull\n  }\n}\n    \n\n    fragment simpleListPayloadOptionsFull on AutomateSimpleListPayload {\n  __typename\n  list\n}\n    \n\n    fragment hostedFilePayloadOptionsFull on AutomateHostedFilePayload {\n  __typename\n  id\n  delimiter\n}\n    \n\n    fragment nullPayloadOptionsFull on AutomateNullPayload {\n  __typename\n  quantity\n}\n    \n\n    fragment automatePreprocessorFull on AutomatePreprocessor {\n  __typename\n  options {\n    ... on AutomatePrefixPreprocessor {\n      ...automatePrefixPreprocessorFull\n    }\n    ... on AutomateSuffixPreprocessor {\n      ...automateSuffixPreprocessorFull\n    }\n    ... on AutomateWorkflowPreprocessor {\n      ...automateWorkflowPreprocessorFull\n    }\n    ... on AutomateUrlEncodePreprocessor {\n      ...automateUrlEncodePreprocessorFull\n    }\n  }\n}\n    \n\n    fragment automatePrefixPreprocessorFull on AutomatePrefixPreprocessor {\n  __typename\n  value\n}\n    \n\n    fragment automateSuffixPreprocessorFull on AutomateSuffixPreprocessor {\n  __typename\n  value\n}\n    \n\n    fragment automateWorkflowPreprocessorFull on AutomateWorkflowPreprocessor {\n  __typename\n  id\n}\n    \n\n    fragment automateUrlEncodePreprocessorFull on AutomateUrlEncodePreprocessor {\n  __typename\n  charset\n  nonAscii\n}\n    \n\n    fragment automatePlaceholderFull on AutomatePlaceholder {\n  __typename\n  start\n  end\n}\n    ";
 export declare const CancelAutomateTaskDocument = "\n    mutation cancelAutomateTask($id: ID!) {\n  cancelAutomateTask(id: $id) {\n    cancelledId\n    userError {\n      ... on UnknownIdUserError {\n        ...unknownIdUserErrorFull\n      }\n      ... on OtherUserError {\n        ...otherUserErrorFull\n      }\n    }\n  }\n}\n    \n    fragment unknownIdUserErrorFull on UnknownIdUserError {\n  ...userErrorFull\n  id\n}\n    \n\n    fragment userErrorFull on UserError {\n  __typename\n  code\n}\n    \n\n    fragment otherUserErrorFull on OtherUserError {\n  ...userErrorFull\n}\n    ";
 export declare const PauseAutomateTaskDocument = "\n    mutation pauseAutomateTask($id: ID!) {\n  pauseAutomateTask(id: $id) {\n    automateTask {\n      ...automateTaskMeta\n    }\n    userError {\n      ... on UnknownIdUserError {\n        ...unknownIdUserErrorFull\n      }\n      ... on OtherUserError {\n        ...otherUserErrorFull\n      }\n    }\n  }\n}\n    \n    fragment automateTaskMeta on AutomateTask {\n  id\n  paused\n  entry {\n    ...automateEntryMeta\n  }\n}\n    \n\n    fragment automateEntryMeta on AutomateEntry {\n  __typename\n  id\n  name\n  createdAt\n  session {\n    id\n  }\n}\n    \n\n    fragment unknownIdUserErrorFull on UnknownIdUserError {\n  ...userErrorFull\n  id\n}\n    \n\n    fragment userErrorFull on UserError {\n  __typename\n  code\n}\n    \n\n    fragment otherUserErrorFull on OtherUserError {\n  ...userErrorFull\n}\n    ";
 export declare const ResumeAutomateTaskDocument = "\n    mutation resumeAutomateTask($id: ID!) {\n  resumeAutomateTask(id: $id) {\n    automateTask {\n      ...automateTaskMeta\n    }\n    userError {\n      ... on UnknownIdUserError {\n        ...unknownIdUserErrorFull\n      }\n      ... on OtherUserError {\n        ...otherUserErrorFull\n      }\n    }\n  }\n}\n    \n    fragment automateTaskMeta on AutomateTask {\n  id\n  paused\n  entry {\n    ...automateEntryMeta\n  }\n}\n    \n\n    fragment automateEntryMeta on AutomateEntry {\n  __typename\n  id\n  name\n  createdAt\n  session {\n    id\n  }\n}\n    \n\n    fragment unknownIdUserErrorFull on UnknownIdUserError {\n  ...userErrorFull\n  id\n}\n    \n\n    fragment userErrorFull on UserError {\n  __typename\n  code\n}\n    \n\n    fragment otherUserErrorFull on OtherUserError {\n  ...userErrorFull\n}\n    ";
@@ -12279,18 +12802,22 @@ export declare const UpdateUpstreamProxyDocument = "\n    mutation updateUpstrea
 export declare const DeleteUpstreamProxyDocument = "\n    mutation deleteUpstreamProxy($id: ID!) {\n  deleteUpstreamProxy(id: $id) {\n    deletedId\n  }\n}\n    ";
 export declare const TestUpstreamProxyDocument = "\n    mutation testUpstreamProxy($input: TestUpstreamProxyInput!) {\n  testUpstreamProxy(input: $input) {\n    success\n  }\n}\n    ";
 export declare const RankUpstreamProxyDocument = "\n    mutation rankUpstreamProxy($id: ID!, $input: RankUpstreamProxyInput!) {\n  rankUpstreamProxy(id: $id, input: $input) {\n    proxy {\n      ...upstreamProxyFull\n    }\n  }\n}\n    \n    fragment upstreamProxyFull on UpstreamProxy {\n  __typename\n  id\n  allowlist\n  denylist\n  auth {\n    ... on UpstreamProxyAuthBasic {\n      ...upstreamProxyAuthBasicFull\n    }\n  }\n  enabled\n  host\n  kind\n  port\n  rank\n}\n    \n\n    fragment upstreamProxyAuthBasicFull on UpstreamProxyAuthBasic {\n  __typename\n  username\n  password\n}\n    ";
+export declare const InstallPluginPackageDocument = "\n    mutation installPluginPackage($input: InstallPluginPackageInput!) {\n  installPluginPackage(input: $input) {\n    package {\n      ...pluginPackageFull\n    }\n    error {\n      ... on OtherUserError {\n        ...otherUserErrorFull\n      }\n      ... on PluginUserError {\n        ...pluginUserErrorFull\n      }\n    }\n  }\n}\n    \n    fragment pluginPackageFull on PluginPackage {\n  ...pluginPackageMeta\n  plugins {\n    ... on PluginFrontend {\n      ...pluginFrontendFull\n    }\n  }\n}\n    \n\n    fragment pluginPackageMeta on PluginPackage {\n  id\n  name\n  description\n  author {\n    ...pluginAuthorFull\n  }\n  version\n  installedAt\n  manifestId\n}\n    \n\n    fragment pluginAuthorFull on PluginAuthor {\n  name\n  email\n  url\n}\n    \n\n    fragment pluginFrontendFull on PluginFrontend {\n  ...pluginFrontendMeta\n  data\n}\n    \n\n    fragment pluginFrontendMeta on PluginFrontend {\n  ...pluginMeta\n  entrypoint\n  style\n}\n    \n\n    fragment pluginMeta on Plugin {\n  __typename\n  id\n  name\n  enabled\n  manifestId\n  package {\n    id\n  }\n}\n    \n\n    fragment otherUserErrorFull on OtherUserError {\n  ...userErrorFull\n}\n    \n\n    fragment userErrorFull on UserError {\n  __typename\n  code\n}\n    \n\n    fragment pluginUserErrorFull on PluginUserError {\n  ...userErrorFull\n  reason\n}\n    ";
+export declare const UninstallPluginPackageDocument = "\n    mutation uninstallPluginPackage($id: ID!) {\n  uninstallPluginPackage(id: $id) {\n    deletedId\n    error {\n      ... on OtherUserError {\n        ...otherUserErrorFull\n      }\n      ... on UnknownIdUserError {\n        ...unknownIdUserErrorFull\n      }\n    }\n  }\n}\n    \n    fragment otherUserErrorFull on OtherUserError {\n  ...userErrorFull\n}\n    \n\n    fragment userErrorFull on UserError {\n  __typename\n  code\n}\n    \n\n    fragment unknownIdUserErrorFull on UnknownIdUserError {\n  ...userErrorFull\n  id\n}\n    ";
+export declare const TogglePluginDocument = "\n    mutation togglePlugin($id: ID!, $enabled: Boolean!) {\n  togglePlugin(id: $id, enabled: $enabled) {\n    plugin {\n      ... on PluginFrontend {\n        ...pluginFrontendFull\n      }\n    }\n    error {\n      ... on OtherUserError {\n        ...otherUserErrorFull\n      }\n      ... on UnknownIdUserError {\n        ...unknownIdUserErrorFull\n      }\n      ... on PluginUserError {\n        ...pluginUserErrorFull\n      }\n    }\n  }\n}\n    \n    fragment pluginFrontendFull on PluginFrontend {\n  ...pluginFrontendMeta\n  data\n}\n    \n\n    fragment pluginFrontendMeta on PluginFrontend {\n  ...pluginMeta\n  entrypoint\n  style\n}\n    \n\n    fragment pluginMeta on Plugin {\n  __typename\n  id\n  name\n  enabled\n  manifestId\n  package {\n    id\n  }\n}\n    \n\n    fragment otherUserErrorFull on OtherUserError {\n  ...userErrorFull\n}\n    \n\n    fragment userErrorFull on UserError {\n  __typename\n  code\n}\n    \n\n    fragment unknownIdUserErrorFull on UnknownIdUserError {\n  ...userErrorFull\n  id\n}\n    \n\n    fragment pluginUserErrorFull on PluginUserError {\n  ...userErrorFull\n  reason\n}\n    ";
+export declare const SetPluginDataDocument = "\n    mutation setPluginData($id: ID!, $data: JSON!) {\n  setPluginData(id: $id, data: $data) {\n    plugin {\n      ... on PluginFrontend {\n        ...pluginFrontendFull\n      }\n    }\n    error {\n      ... on OtherUserError {\n        ...otherUserErrorFull\n      }\n      ... on UnknownIdUserError {\n        ...unknownIdUserErrorFull\n      }\n      ... on PluginUserError {\n        ...pluginUserErrorFull\n      }\n    }\n  }\n}\n    \n    fragment pluginFrontendFull on PluginFrontend {\n  ...pluginFrontendMeta\n  data\n}\n    \n\n    fragment pluginFrontendMeta on PluginFrontend {\n  ...pluginMeta\n  entrypoint\n  style\n}\n    \n\n    fragment pluginMeta on Plugin {\n  __typename\n  id\n  name\n  enabled\n  manifestId\n  package {\n    id\n  }\n}\n    \n\n    fragment otherUserErrorFull on OtherUserError {\n  ...userErrorFull\n}\n    \n\n    fragment userErrorFull on UserError {\n  __typename\n  code\n}\n    \n\n    fragment unknownIdUserErrorFull on UnknownIdUserError {\n  ...userErrorFull\n  id\n}\n    \n\n    fragment pluginUserErrorFull on PluginUserError {\n  ...userErrorFull\n  reason\n}\n    ";
 export declare const CreateProjectDocument = "\n    mutation createProject($input: CreateProjectInput!) {\n  createProject(input: $input) {\n    project {\n      ...projectFull\n    }\n    error {\n      ... on NameTakenUserError {\n        ...nameTakenUserErrorFull\n      }\n      ... on PermissionDeniedUserError {\n        ...permissionDeniedUserErrorFull\n      }\n      ... on OtherUserError {\n        ...otherUserErrorFull\n      }\n    }\n  }\n}\n    \n    fragment projectFull on Project {\n  __typename\n  id\n  name\n  path\n  version\n  status\n  size\n  createdAt\n  updatedAt\n  backups {\n    id\n  }\n}\n    \n\n    fragment nameTakenUserErrorFull on NameTakenUserError {\n  ...userErrorFull\n  name\n}\n    \n\n    fragment userErrorFull on UserError {\n  __typename\n  code\n}\n    \n\n    fragment permissionDeniedUserErrorFull on PermissionDeniedUserError {\n  ...userErrorFull\n  permissionDeniedReason: reason\n}\n    \n\n    fragment otherUserErrorFull on OtherUserError {\n  ...userErrorFull\n}\n    ";
 export declare const SelectProjectDocument = "\n    mutation selectProject($id: ID!) {\n  selectProject(id: $id) {\n    project {\n      ...projectFull\n    }\n  }\n}\n    \n    fragment projectFull on Project {\n  __typename\n  id\n  name\n  path\n  version\n  status\n  size\n  createdAt\n  updatedAt\n  backups {\n    id\n  }\n}\n    ";
 export declare const DeleteProjectDocument = "\n    mutation deleteProject($id: ID!) {\n  deleteProject(id: $id) {\n    deletedId\n  }\n}\n    ";
 export declare const RenameProjectDocument = "\n    mutation renameProject($id: ID!, $name: String!) {\n  renameProject(id: $id, name: $name) {\n    project {\n      ...projectFull\n    }\n    error {\n      ... on NameTakenUserError {\n        ...nameTakenUserErrorFull\n      }\n      ... on OtherUserError {\n        ...otherUserErrorFull\n      }\n    }\n  }\n}\n    \n    fragment projectFull on Project {\n  __typename\n  id\n  name\n  path\n  version\n  status\n  size\n  createdAt\n  updatedAt\n  backups {\n    id\n  }\n}\n    \n\n    fragment nameTakenUserErrorFull on NameTakenUserError {\n  ...userErrorFull\n  name\n}\n    \n\n    fragment userErrorFull on UserError {\n  __typename\n  code\n}\n    \n\n    fragment otherUserErrorFull on OtherUserError {\n  ...userErrorFull\n}\n    ";
-export declare const RenameReplaySessionCollectionDocument = "\n    mutation renameReplaySessionCollection($id: ID!, $name: String!) {\n  renameReplaySessionCollection(id: $id, name: $name) {\n    collection {\n      ...replaySessionCollectionMeta\n    }\n  }\n}\n    \n    fragment replaySessionCollectionMeta on ReplaySessionCollection {\n  __typename\n  id\n  name\n  sessions {\n    ...replaySessionMeta\n  }\n}\n    \n\n    fragment replaySessionMeta on ReplaySession {\n  __typename\n  id\n  name\n  activeEntry {\n    ...replayEntryMeta\n  }\n  collection {\n    id\n  }\n  entries {\n    edges {\n      cursor\n      node {\n        ...replayEntryMeta\n      }\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n    count {\n      ...countFull\n    }\n  }\n}\n    \n\n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    \n\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
-export declare const CreateReplaySessionCollectionDocument = "\n    mutation createReplaySessionCollection($input: CreateReplaySessionCollectionInput!) {\n  createReplaySessionCollection(input: $input) {\n    collection {\n      ...replaySessionCollectionMeta\n    }\n  }\n}\n    \n    fragment replaySessionCollectionMeta on ReplaySessionCollection {\n  __typename\n  id\n  name\n  sessions {\n    ...replaySessionMeta\n  }\n}\n    \n\n    fragment replaySessionMeta on ReplaySession {\n  __typename\n  id\n  name\n  activeEntry {\n    ...replayEntryMeta\n  }\n  collection {\n    id\n  }\n  entries {\n    edges {\n      cursor\n      node {\n        ...replayEntryMeta\n      }\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n    count {\n      ...countFull\n    }\n  }\n}\n    \n\n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    \n\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
+export declare const RenameReplaySessionCollectionDocument = "\n    mutation renameReplaySessionCollection($id: ID!, $name: String!) {\n  renameReplaySessionCollection(id: $id, name: $name) {\n    collection {\n      ...replaySessionCollectionMeta\n    }\n  }\n}\n    \n    fragment replaySessionCollectionMeta on ReplaySessionCollection {\n  __typename\n  id\n  name\n  sessions {\n    ...replaySessionMeta\n  }\n}\n    \n\n    fragment replaySessionMeta on ReplaySession {\n  __typename\n  id\n  name\n  activeEntry {\n    ...replayEntryMeta\n  }\n  collection {\n    id\n  }\n  entries {\n    nodes {\n      ...replayEntryMeta\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n    count {\n      ...countFull\n    }\n  }\n}\n    \n\n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    \n\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
+export declare const CreateReplaySessionCollectionDocument = "\n    mutation createReplaySessionCollection($input: CreateReplaySessionCollectionInput!) {\n  createReplaySessionCollection(input: $input) {\n    collection {\n      ...replaySessionCollectionMeta\n    }\n  }\n}\n    \n    fragment replaySessionCollectionMeta on ReplaySessionCollection {\n  __typename\n  id\n  name\n  sessions {\n    ...replaySessionMeta\n  }\n}\n    \n\n    fragment replaySessionMeta on ReplaySession {\n  __typename\n  id\n  name\n  activeEntry {\n    ...replayEntryMeta\n  }\n  collection {\n    id\n  }\n  entries {\n    nodes {\n      ...replayEntryMeta\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n    count {\n      ...countFull\n    }\n  }\n}\n    \n\n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    \n\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
 export declare const DeleteReplaySessionCollectionDocument = "\n    mutation deleteReplaySessionCollection($id: ID!) {\n  deleteReplaySessionCollection(id: $id) {\n    deletedId\n  }\n}\n    ";
-export declare const RenameReplaySessionDocument = "\n    mutation renameReplaySession($id: ID!, $name: String!) {\n  renameReplaySession(id: $id, name: $name) {\n    session {\n      ...replaySessionMeta\n    }\n  }\n}\n    \n    fragment replaySessionMeta on ReplaySession {\n  __typename\n  id\n  name\n  activeEntry {\n    ...replayEntryMeta\n  }\n  collection {\n    id\n  }\n  entries {\n    edges {\n      cursor\n      node {\n        ...replayEntryMeta\n      }\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n    count {\n      ...countFull\n    }\n  }\n}\n    \n\n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    \n\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
-export declare const SetActiveReplaySessionEntryDocument = "\n    mutation setActiveReplaySessionEntry($id: ID!, $entryId: ID!) {\n  setActiveReplaySessionEntry(id: $id, entryId: $entryId) {\n    session {\n      ...replaySessionMeta\n    }\n  }\n}\n    \n    fragment replaySessionMeta on ReplaySession {\n  __typename\n  id\n  name\n  activeEntry {\n    ...replayEntryMeta\n  }\n  collection {\n    id\n  }\n  entries {\n    edges {\n      cursor\n      node {\n        ...replayEntryMeta\n      }\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n    count {\n      ...countFull\n    }\n  }\n}\n    \n\n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    \n\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
+export declare const RenameReplaySessionDocument = "\n    mutation renameReplaySession($id: ID!, $name: String!) {\n  renameReplaySession(id: $id, name: $name) {\n    session {\n      ...replaySessionMeta\n    }\n  }\n}\n    \n    fragment replaySessionMeta on ReplaySession {\n  __typename\n  id\n  name\n  activeEntry {\n    ...replayEntryMeta\n  }\n  collection {\n    id\n  }\n  entries {\n    nodes {\n      ...replayEntryMeta\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n    count {\n      ...countFull\n    }\n  }\n}\n    \n\n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    \n\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
+export declare const SetActiveReplaySessionEntryDocument = "\n    mutation setActiveReplaySessionEntry($id: ID!, $entryId: ID!) {\n  setActiveReplaySessionEntry(id: $id, entryId: $entryId) {\n    session {\n      ...replaySessionMeta\n    }\n  }\n}\n    \n    fragment replaySessionMeta on ReplaySession {\n  __typename\n  id\n  name\n  activeEntry {\n    ...replayEntryMeta\n  }\n  collection {\n    id\n  }\n  entries {\n    nodes {\n      ...replayEntryMeta\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n    count {\n      ...countFull\n    }\n  }\n}\n    \n\n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    \n\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
 export declare const DeleteReplaySessionsDocument = "\n    mutation deleteReplaySessions($ids: [ID!]!) {\n  deleteReplaySessions(ids: $ids) {\n    deletedIds\n  }\n}\n    ";
-export declare const CreateReplaySessionDocument = "\n    mutation createReplaySession($input: CreateReplaySessionInput!) {\n  createReplaySession(input: $input) {\n    session {\n      ...replaySessionMeta\n      collection {\n        ...replaySessionCollectionMeta\n      }\n    }\n  }\n}\n    \n    fragment replaySessionMeta on ReplaySession {\n  __typename\n  id\n  name\n  activeEntry {\n    ...replayEntryMeta\n  }\n  collection {\n    id\n  }\n  entries {\n    edges {\n      cursor\n      node {\n        ...replayEntryMeta\n      }\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n    count {\n      ...countFull\n    }\n  }\n}\n    \n\n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    \n\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    \n\n    fragment replaySessionCollectionMeta on ReplaySessionCollection {\n  __typename\n  id\n  name\n  sessions {\n    ...replaySessionMeta\n  }\n}\n    ";
-export declare const MoveReplaySessionDocument = "\n    mutation moveReplaySession($id: ID!, $collectionId: ID!) {\n  moveReplaySession(collectionId: $collectionId, id: $id) {\n    session {\n      ...replaySessionMeta\n    }\n  }\n}\n    \n    fragment replaySessionMeta on ReplaySession {\n  __typename\n  id\n  name\n  activeEntry {\n    ...replayEntryMeta\n  }\n  collection {\n    id\n  }\n  entries {\n    edges {\n      cursor\n      node {\n        ...replayEntryMeta\n      }\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n    count {\n      ...countFull\n    }\n  }\n}\n    \n\n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    \n\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
+export declare const CreateReplaySessionDocument = "\n    mutation createReplaySession($input: CreateReplaySessionInput!) {\n  createReplaySession(input: $input) {\n    session {\n      ...replaySessionMeta\n      collection {\n        ...replaySessionCollectionMeta\n      }\n    }\n  }\n}\n    \n    fragment replaySessionMeta on ReplaySession {\n  __typename\n  id\n  name\n  activeEntry {\n    ...replayEntryMeta\n  }\n  collection {\n    id\n  }\n  entries {\n    nodes {\n      ...replayEntryMeta\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n    count {\n      ...countFull\n    }\n  }\n}\n    \n\n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    \n\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    \n\n    fragment replaySessionCollectionMeta on ReplaySessionCollection {\n  __typename\n  id\n  name\n  sessions {\n    ...replaySessionMeta\n  }\n}\n    ";
+export declare const MoveReplaySessionDocument = "\n    mutation moveReplaySession($id: ID!, $collectionId: ID!) {\n  moveReplaySession(collectionId: $collectionId, id: $id) {\n    session {\n      ...replaySessionMeta\n    }\n  }\n}\n    \n    fragment replaySessionMeta on ReplaySession {\n  __typename\n  id\n  name\n  activeEntry {\n    ...replayEntryMeta\n  }\n  collection {\n    id\n  }\n  entries {\n    nodes {\n      ...replayEntryMeta\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n    count {\n      ...countFull\n    }\n  }\n}\n    \n\n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    \n\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
 export declare const StartReplayTaskDocument = "\n    mutation startReplayTask($replaySessionId: ID!, $input: StartReplayTaskInput!) {\n  startReplayTask(replaySessionId: $replaySessionId, input: $input) {\n    task {\n      ...replayTaskMeta\n    }\n  }\n}\n    \n    fragment replayTaskMeta on ReplayTask {\n  __typename\n  id\n  error\n  replayEntry {\n    ...replayEntryMeta\n  }\n}\n    \n\n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    ";
 export declare const CancelReplayTaskDocument = "\n    mutation cancelReplayTask($id: ID!) {\n  cancelReplayTask(id: $id) {\n    cancelledId\n  }\n}\n    ";
 export declare const UpdateRequestMetadataDocument = "\n    mutation updateRequestMetadata($id: ID!, $input: UpdateRequestMetadataInput!) {\n  updateRequestMetadata(id: $id, input: $input) {\n    snapshot\n    metadata {\n      ...requestMetadataFull\n    }\n  }\n}\n    \n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    ";
@@ -12320,16 +12847,17 @@ export declare const UpdateWorkflowDocument = "\n    mutation updateWorkflow($id
 export declare const RunConvertWorkflowDocument = "\n    mutation runConvertWorkflow($id: ID!, $input: Blob!) {\n  runConvertWorkflow(id: $id, input: $input) {\n    error {\n      ... on WorkflowUserError {\n        ...workflowUserErrorFull\n      }\n      ... on PermissionDeniedUserError {\n        ...permissionDeniedUserErrorFull\n      }\n      ... on OtherUserError {\n        ...otherUserErrorFull\n      }\n    }\n    output\n  }\n}\n    \n    fragment workflowUserErrorFull on WorkflowUserError {\n  ...userErrorFull\n  nodeId\n  message\n  reason\n}\n    \n\n    fragment userErrorFull on UserError {\n  __typename\n  code\n}\n    \n\n    fragment permissionDeniedUserErrorFull on PermissionDeniedUserError {\n  ...userErrorFull\n  permissionDeniedReason: reason\n}\n    \n\n    fragment otherUserErrorFull on OtherUserError {\n  ...userErrorFull\n}\n    ";
 export declare const RunActiveWorkflowDocument = "\n    mutation runActiveWorkflow($id: ID!, $input: RunActiveWorkflowInput!) {\n  runActiveWorkflow(id: $id, input: $input) {\n    error {\n      ... on UnknownIdUserError {\n        ...unknownIdUserErrorFull\n      }\n      ... on PermissionDeniedUserError {\n        ...permissionDeniedUserErrorFull\n      }\n      ... on OtherUserError {\n        ...otherUserErrorFull\n      }\n    }\n    task {\n      ...workflowTaskMeta\n    }\n  }\n}\n    \n    fragment unknownIdUserErrorFull on UnknownIdUserError {\n  ...userErrorFull\n  id\n}\n    \n\n    fragment userErrorFull on UserError {\n  __typename\n  code\n}\n    \n\n    fragment permissionDeniedUserErrorFull on PermissionDeniedUserError {\n  ...userErrorFull\n  permissionDeniedReason: reason\n}\n    \n\n    fragment otherUserErrorFull on OtherUserError {\n  ...userErrorFull\n}\n    \n\n    fragment workflowTaskMeta on WorkflowTask {\n  ...taskFull\n  workflow {\n    ...workflowMeta\n  }\n}\n    \n\n    fragment taskFull on Task {\n  id\n  createdAt\n}\n    \n\n    fragment workflowMeta on Workflow {\n  __typename\n  id\n  kind\n  name\n  enabled\n  global\n}\n    ";
 export declare const GlobalizeWorkflowDocument = "\n    mutation globalizeWorkflow($id: ID!) {\n  globalizeWorkflow(id: $id) {\n    error {\n      ... on UnknownIdUserError {\n        ...unknownIdUserErrorFull\n      }\n      ... on WorkflowUserError {\n        ...workflowUserErrorFull\n      }\n      ... on OtherUserError {\n        ...otherUserErrorFull\n      }\n    }\n    workflow {\n      ...workflowFull\n    }\n  }\n}\n    \n    fragment unknownIdUserErrorFull on UnknownIdUserError {\n  ...userErrorFull\n  id\n}\n    \n\n    fragment userErrorFull on UserError {\n  __typename\n  code\n}\n    \n\n    fragment workflowUserErrorFull on WorkflowUserError {\n  ...userErrorFull\n  nodeId\n  message\n  reason\n}\n    \n\n    fragment otherUserErrorFull on OtherUserError {\n  ...userErrorFull\n}\n    \n\n    fragment workflowFull on Workflow {\n  ...workflowMeta\n  definition\n}\n    \n\n    fragment workflowMeta on Workflow {\n  __typename\n  id\n  kind\n  name\n  enabled\n  global\n}\n    ";
+export declare const LocalizeWorkflowDocument = "\n    mutation localizeWorkflow($id: ID!) {\n  localizeWorkflow(id: $id) {\n    error {\n      ... on UnknownIdUserError {\n        ...unknownIdUserErrorFull\n      }\n      ... on WorkflowUserError {\n        ...workflowUserErrorFull\n      }\n      ... on OtherUserError {\n        ...otherUserErrorFull\n      }\n    }\n    workflow {\n      ...workflowFull\n    }\n  }\n}\n    \n    fragment unknownIdUserErrorFull on UnknownIdUserError {\n  ...userErrorFull\n  id\n}\n    \n\n    fragment userErrorFull on UserError {\n  __typename\n  code\n}\n    \n\n    fragment workflowUserErrorFull on WorkflowUserError {\n  ...userErrorFull\n  nodeId\n  message\n  reason\n}\n    \n\n    fragment otherUserErrorFull on OtherUserError {\n  ...userErrorFull\n}\n    \n\n    fragment workflowFull on Workflow {\n  ...workflowMeta\n  definition\n}\n    \n\n    fragment workflowMeta on Workflow {\n  __typename\n  id\n  kind\n  name\n  enabled\n  global\n}\n    ";
 export declare const AssistantModelsDocument = "\n    query assistantModels {\n  assistantModels {\n    ...assistantModelFull\n  }\n}\n    \n    fragment assistantModelFull on AssistantModel {\n  __typename\n  id\n  name\n  tokenCredit\n}\n    ";
 export declare const AssistantSessionsDocument = "\n    query assistantSessions {\n  assistantSessions {\n    ...assistantSessionMeta\n  }\n}\n    \n    fragment assistantSessionMeta on AssistantSession {\n  __typename\n  id\n  modelId\n  name\n  updatedAt\n  createdAt\n}\n    ";
 export declare const AssistantSessionDocument = "\n    query assistantSession($id: ID!) {\n  assistantSession(id: $id) {\n    ...assistantSessionFull\n  }\n}\n    \n    fragment assistantSessionFull on AssistantSession {\n  ...assistantSessionMeta\n  messages {\n    ...assistantMessageFull\n  }\n}\n    \n\n    fragment assistantSessionMeta on AssistantSession {\n  __typename\n  id\n  modelId\n  name\n  updatedAt\n  createdAt\n}\n    \n\n    fragment assistantMessageFull on AssistantMessage {\n  __typename\n  id\n  content\n  role\n  session {\n    id\n  }\n}\n    ";
 export declare const AssistantUsageDocument = "\n    query assistantUsage {\n  viewer {\n    id\n    assistantUsage {\n      ...assistantUsageFull\n    }\n  }\n}\n    \n    fragment assistantUsageFull on AssistantUsage {\n  __typename\n  balance\n}\n    ";
-export declare const AutomateEntryDocument = "\n    query automateEntry($id: ID!) {\n  automateEntry(id: $id) {\n    ...automateEntryFull\n  }\n}\n    \n    fragment automateEntryFull on AutomateEntry {\n  ...automateEntryMeta\n  settings {\n    ...automateSettingsFull\n  }\n}\n    \n\n    fragment automateEntryMeta on AutomateEntry {\n  __typename\n  id\n  name\n  createdAt\n  session {\n    id\n  }\n}\n    \n\n    fragment automateSettingsFull on AutomateSettings {\n  __typename\n  closeConnection\n  updateContentLength\n  strategy\n  concurrency {\n    ...concurrencySettingFull\n  }\n  retryOnFailure {\n    ...retryOnFailureSettingFull\n  }\n  payloads {\n    ...automatePayloadFull\n  }\n  placeholders {\n    ...automatePlaceholderFull\n  }\n}\n    \n\n    fragment concurrencySettingFull on AutomateConcurrencySetting {\n  __typename\n  delay\n  workers\n}\n    \n\n    fragment retryOnFailureSettingFull on AutomateRetryOnFailureSetting {\n  __typename\n  backoff\n  maximumRetries\n}\n    \n\n    fragment automatePayloadFull on AutomatePayload {\n  __typename\n  kind\n  options {\n    ... on AutomateSimpleListPayload {\n      ...simpleListPayloadOptionsFull\n    }\n    ... on AutomateHostedFilePayload {\n      ...hostedFilePayloadOptionsFull\n    }\n    ... on AutomateNullPayload {\n      ...nullPayloadOptionsFull\n    }\n  }\n  preprocessors {\n    __typename\n    kind\n    options {\n      ... on AutomatePrefixPreprocessor {\n        value\n      }\n      ... on AutomateSuffixPreprocessor {\n        value\n      }\n    }\n  }\n  urlEncode {\n    __typename\n    charset\n    enabled\n    nonAscii\n  }\n}\n    \n\n    fragment simpleListPayloadOptionsFull on AutomateSimpleListPayload {\n  __typename\n  list\n}\n    \n\n    fragment hostedFilePayloadOptionsFull on AutomateHostedFilePayload {\n  __typename\n  id\n  delimiter\n}\n    \n\n    fragment nullPayloadOptionsFull on AutomateNullPayload {\n  __typename\n  quantity\n}\n    \n\n    fragment automatePlaceholderFull on AutomatePlaceholder {\n  __typename\n  start\n  end\n}\n    ";
-export declare const AutomateEntryRequestsDocument = "\n    query automateEntryRequests($id: ID!, $after: String, $first: Int, $before: String, $last: Int, $order: AutomateEntryRequestOrderInput) {\n  automateEntry(id: $id) {\n    ...automateEntryFull\n    requests(\n      after: $after\n      before: $before\n      first: $first\n      last: $last\n      order: $order\n    ) {\n      snapshot\n      edges {\n        ...automateEntryRequestEdgeMeta\n      }\n    }\n  }\n}\n    \n    fragment automateEntryFull on AutomateEntry {\n  ...automateEntryMeta\n  settings {\n    ...automateSettingsFull\n  }\n}\n    \n\n    fragment automateEntryMeta on AutomateEntry {\n  __typename\n  id\n  name\n  createdAt\n  session {\n    id\n  }\n}\n    \n\n    fragment automateSettingsFull on AutomateSettings {\n  __typename\n  closeConnection\n  updateContentLength\n  strategy\n  concurrency {\n    ...concurrencySettingFull\n  }\n  retryOnFailure {\n    ...retryOnFailureSettingFull\n  }\n  payloads {\n    ...automatePayloadFull\n  }\n  placeholders {\n    ...automatePlaceholderFull\n  }\n}\n    \n\n    fragment concurrencySettingFull on AutomateConcurrencySetting {\n  __typename\n  delay\n  workers\n}\n    \n\n    fragment retryOnFailureSettingFull on AutomateRetryOnFailureSetting {\n  __typename\n  backoff\n  maximumRetries\n}\n    \n\n    fragment automatePayloadFull on AutomatePayload {\n  __typename\n  kind\n  options {\n    ... on AutomateSimpleListPayload {\n      ...simpleListPayloadOptionsFull\n    }\n    ... on AutomateHostedFilePayload {\n      ...hostedFilePayloadOptionsFull\n    }\n    ... on AutomateNullPayload {\n      ...nullPayloadOptionsFull\n    }\n  }\n  preprocessors {\n    __typename\n    kind\n    options {\n      ... on AutomatePrefixPreprocessor {\n        value\n      }\n      ... on AutomateSuffixPreprocessor {\n        value\n      }\n    }\n  }\n  urlEncode {\n    __typename\n    charset\n    enabled\n    nonAscii\n  }\n}\n    \n\n    fragment simpleListPayloadOptionsFull on AutomateSimpleListPayload {\n  __typename\n  list\n}\n    \n\n    fragment hostedFilePayloadOptionsFull on AutomateHostedFilePayload {\n  __typename\n  id\n  delimiter\n}\n    \n\n    fragment nullPayloadOptionsFull on AutomateNullPayload {\n  __typename\n  quantity\n}\n    \n\n    fragment automatePlaceholderFull on AutomatePlaceholder {\n  __typename\n  start\n  end\n}\n    \n\n    fragment automateEntryRequestEdgeMeta on AutomateEntryRequestEdge {\n  __typename\n  node {\n    ...automateEntryRequestMeta\n  }\n  cursor\n}\n    \n\n    fragment automateEntryRequestMeta on AutomateEntryRequest {\n  __typename\n  sequenceId\n  automateEntryId\n  error\n  request {\n    ...requestMeta\n  }\n  payloads {\n    ...automateEntryRequestPayloadFull\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment automateEntryRequestPayloadFull on AutomateEntryRequestPayload {\n  __typename\n  position\n  raw\n}\n    ";
-export declare const AutomateEntryRequestsByOffsetDocument = "\n    query automateEntryRequestsByOffset($id: ID!, $limit: Int, $offset: Int, $order: AutomateEntryRequestOrderInput) {\n  automateEntry(id: $id) {\n    ...automateEntryFull\n    requestsByOffset(limit: $limit, offset: $offset, order: $order) {\n      snapshot\n      edges {\n        ...automateEntryRequestEdgeMeta\n      }\n    }\n  }\n}\n    \n    fragment automateEntryFull on AutomateEntry {\n  ...automateEntryMeta\n  settings {\n    ...automateSettingsFull\n  }\n}\n    \n\n    fragment automateEntryMeta on AutomateEntry {\n  __typename\n  id\n  name\n  createdAt\n  session {\n    id\n  }\n}\n    \n\n    fragment automateSettingsFull on AutomateSettings {\n  __typename\n  closeConnection\n  updateContentLength\n  strategy\n  concurrency {\n    ...concurrencySettingFull\n  }\n  retryOnFailure {\n    ...retryOnFailureSettingFull\n  }\n  payloads {\n    ...automatePayloadFull\n  }\n  placeholders {\n    ...automatePlaceholderFull\n  }\n}\n    \n\n    fragment concurrencySettingFull on AutomateConcurrencySetting {\n  __typename\n  delay\n  workers\n}\n    \n\n    fragment retryOnFailureSettingFull on AutomateRetryOnFailureSetting {\n  __typename\n  backoff\n  maximumRetries\n}\n    \n\n    fragment automatePayloadFull on AutomatePayload {\n  __typename\n  kind\n  options {\n    ... on AutomateSimpleListPayload {\n      ...simpleListPayloadOptionsFull\n    }\n    ... on AutomateHostedFilePayload {\n      ...hostedFilePayloadOptionsFull\n    }\n    ... on AutomateNullPayload {\n      ...nullPayloadOptionsFull\n    }\n  }\n  preprocessors {\n    __typename\n    kind\n    options {\n      ... on AutomatePrefixPreprocessor {\n        value\n      }\n      ... on AutomateSuffixPreprocessor {\n        value\n      }\n    }\n  }\n  urlEncode {\n    __typename\n    charset\n    enabled\n    nonAscii\n  }\n}\n    \n\n    fragment simpleListPayloadOptionsFull on AutomateSimpleListPayload {\n  __typename\n  list\n}\n    \n\n    fragment hostedFilePayloadOptionsFull on AutomateHostedFilePayload {\n  __typename\n  id\n  delimiter\n}\n    \n\n    fragment nullPayloadOptionsFull on AutomateNullPayload {\n  __typename\n  quantity\n}\n    \n\n    fragment automatePlaceholderFull on AutomatePlaceholder {\n  __typename\n  start\n  end\n}\n    \n\n    fragment automateEntryRequestEdgeMeta on AutomateEntryRequestEdge {\n  __typename\n  node {\n    ...automateEntryRequestMeta\n  }\n  cursor\n}\n    \n\n    fragment automateEntryRequestMeta on AutomateEntryRequest {\n  __typename\n  sequenceId\n  automateEntryId\n  error\n  request {\n    ...requestMeta\n  }\n  payloads {\n    ...automateEntryRequestPayloadFull\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment automateEntryRequestPayloadFull on AutomateEntryRequestPayload {\n  __typename\n  position\n  raw\n}\n    ";
-export declare const AutomateEntryRequestsCountDocument = "\n    query automateEntryRequestsCount($id: ID!) {\n  automateEntry(id: $id) {\n    ...automateEntryFull\n    requests(first: 0) {\n      count {\n        ...countFull\n      }\n    }\n  }\n}\n    \n    fragment automateEntryFull on AutomateEntry {\n  ...automateEntryMeta\n  settings {\n    ...automateSettingsFull\n  }\n}\n    \n\n    fragment automateEntryMeta on AutomateEntry {\n  __typename\n  id\n  name\n  createdAt\n  session {\n    id\n  }\n}\n    \n\n    fragment automateSettingsFull on AutomateSettings {\n  __typename\n  closeConnection\n  updateContentLength\n  strategy\n  concurrency {\n    ...concurrencySettingFull\n  }\n  retryOnFailure {\n    ...retryOnFailureSettingFull\n  }\n  payloads {\n    ...automatePayloadFull\n  }\n  placeholders {\n    ...automatePlaceholderFull\n  }\n}\n    \n\n    fragment concurrencySettingFull on AutomateConcurrencySetting {\n  __typename\n  delay\n  workers\n}\n    \n\n    fragment retryOnFailureSettingFull on AutomateRetryOnFailureSetting {\n  __typename\n  backoff\n  maximumRetries\n}\n    \n\n    fragment automatePayloadFull on AutomatePayload {\n  __typename\n  kind\n  options {\n    ... on AutomateSimpleListPayload {\n      ...simpleListPayloadOptionsFull\n    }\n    ... on AutomateHostedFilePayload {\n      ...hostedFilePayloadOptionsFull\n    }\n    ... on AutomateNullPayload {\n      ...nullPayloadOptionsFull\n    }\n  }\n  preprocessors {\n    __typename\n    kind\n    options {\n      ... on AutomatePrefixPreprocessor {\n        value\n      }\n      ... on AutomateSuffixPreprocessor {\n        value\n      }\n    }\n  }\n  urlEncode {\n    __typename\n    charset\n    enabled\n    nonAscii\n  }\n}\n    \n\n    fragment simpleListPayloadOptionsFull on AutomateSimpleListPayload {\n  __typename\n  list\n}\n    \n\n    fragment hostedFilePayloadOptionsFull on AutomateHostedFilePayload {\n  __typename\n  id\n  delimiter\n}\n    \n\n    fragment nullPayloadOptionsFull on AutomateNullPayload {\n  __typename\n  quantity\n}\n    \n\n    fragment automatePlaceholderFull on AutomatePlaceholder {\n  __typename\n  start\n  end\n}\n    \n\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
+export declare const AutomateEntryDocument = "\n    query automateEntry($id: ID!) {\n  automateEntry(id: $id) {\n    ...automateEntryFull\n  }\n}\n    \n    fragment automateEntryFull on AutomateEntry {\n  ...automateEntryMeta\n  settings {\n    ...automateSettingsFull\n  }\n}\n    \n\n    fragment automateEntryMeta on AutomateEntry {\n  __typename\n  id\n  name\n  createdAt\n  session {\n    id\n  }\n}\n    \n\n    fragment automateSettingsFull on AutomateSettings {\n  __typename\n  closeConnection\n  updateContentLength\n  strategy\n  concurrency {\n    ...concurrencySettingFull\n  }\n  retryOnFailure {\n    ...retryOnFailureSettingFull\n  }\n  payloads {\n    ...automatePayloadFull\n  }\n  placeholders {\n    ...automatePlaceholderFull\n  }\n}\n    \n\n    fragment concurrencySettingFull on AutomateConcurrencySetting {\n  __typename\n  delay\n  workers\n}\n    \n\n    fragment retryOnFailureSettingFull on AutomateRetryOnFailureSetting {\n  __typename\n  backoff\n  maximumRetries\n}\n    \n\n    fragment automatePayloadFull on AutomatePayload {\n  __typename\n  options {\n    ... on AutomateSimpleListPayload {\n      ...simpleListPayloadOptionsFull\n    }\n    ... on AutomateHostedFilePayload {\n      ...hostedFilePayloadOptionsFull\n    }\n    ... on AutomateNullPayload {\n      ...nullPayloadOptionsFull\n    }\n  }\n  preprocessors {\n    ...automatePreprocessorFull\n  }\n}\n    \n\n    fragment simpleListPayloadOptionsFull on AutomateSimpleListPayload {\n  __typename\n  list\n}\n    \n\n    fragment hostedFilePayloadOptionsFull on AutomateHostedFilePayload {\n  __typename\n  id\n  delimiter\n}\n    \n\n    fragment nullPayloadOptionsFull on AutomateNullPayload {\n  __typename\n  quantity\n}\n    \n\n    fragment automatePreprocessorFull on AutomatePreprocessor {\n  __typename\n  options {\n    ... on AutomatePrefixPreprocessor {\n      ...automatePrefixPreprocessorFull\n    }\n    ... on AutomateSuffixPreprocessor {\n      ...automateSuffixPreprocessorFull\n    }\n    ... on AutomateWorkflowPreprocessor {\n      ...automateWorkflowPreprocessorFull\n    }\n    ... on AutomateUrlEncodePreprocessor {\n      ...automateUrlEncodePreprocessorFull\n    }\n  }\n}\n    \n\n    fragment automatePrefixPreprocessorFull on AutomatePrefixPreprocessor {\n  __typename\n  value\n}\n    \n\n    fragment automateSuffixPreprocessorFull on AutomateSuffixPreprocessor {\n  __typename\n  value\n}\n    \n\n    fragment automateWorkflowPreprocessorFull on AutomateWorkflowPreprocessor {\n  __typename\n  id\n}\n    \n\n    fragment automateUrlEncodePreprocessorFull on AutomateUrlEncodePreprocessor {\n  __typename\n  charset\n  nonAscii\n}\n    \n\n    fragment automatePlaceholderFull on AutomatePlaceholder {\n  __typename\n  start\n  end\n}\n    ";
+export declare const AutomateEntryRequestsDocument = "\n    query automateEntryRequests($id: ID!, $after: String, $first: Int, $before: String, $last: Int, $order: AutomateEntryRequestOrderInput) {\n  automateEntry(id: $id) {\n    ...automateEntryFull\n    requests(\n      after: $after\n      before: $before\n      first: $first\n      last: $last\n      order: $order\n    ) {\n      snapshot\n      edges {\n        ...automateEntryRequestEdgeMeta\n      }\n    }\n  }\n}\n    \n    fragment automateEntryFull on AutomateEntry {\n  ...automateEntryMeta\n  settings {\n    ...automateSettingsFull\n  }\n}\n    \n\n    fragment automateEntryMeta on AutomateEntry {\n  __typename\n  id\n  name\n  createdAt\n  session {\n    id\n  }\n}\n    \n\n    fragment automateSettingsFull on AutomateSettings {\n  __typename\n  closeConnection\n  updateContentLength\n  strategy\n  concurrency {\n    ...concurrencySettingFull\n  }\n  retryOnFailure {\n    ...retryOnFailureSettingFull\n  }\n  payloads {\n    ...automatePayloadFull\n  }\n  placeholders {\n    ...automatePlaceholderFull\n  }\n}\n    \n\n    fragment concurrencySettingFull on AutomateConcurrencySetting {\n  __typename\n  delay\n  workers\n}\n    \n\n    fragment retryOnFailureSettingFull on AutomateRetryOnFailureSetting {\n  __typename\n  backoff\n  maximumRetries\n}\n    \n\n    fragment automatePayloadFull on AutomatePayload {\n  __typename\n  options {\n    ... on AutomateSimpleListPayload {\n      ...simpleListPayloadOptionsFull\n    }\n    ... on AutomateHostedFilePayload {\n      ...hostedFilePayloadOptionsFull\n    }\n    ... on AutomateNullPayload {\n      ...nullPayloadOptionsFull\n    }\n  }\n  preprocessors {\n    ...automatePreprocessorFull\n  }\n}\n    \n\n    fragment simpleListPayloadOptionsFull on AutomateSimpleListPayload {\n  __typename\n  list\n}\n    \n\n    fragment hostedFilePayloadOptionsFull on AutomateHostedFilePayload {\n  __typename\n  id\n  delimiter\n}\n    \n\n    fragment nullPayloadOptionsFull on AutomateNullPayload {\n  __typename\n  quantity\n}\n    \n\n    fragment automatePreprocessorFull on AutomatePreprocessor {\n  __typename\n  options {\n    ... on AutomatePrefixPreprocessor {\n      ...automatePrefixPreprocessorFull\n    }\n    ... on AutomateSuffixPreprocessor {\n      ...automateSuffixPreprocessorFull\n    }\n    ... on AutomateWorkflowPreprocessor {\n      ...automateWorkflowPreprocessorFull\n    }\n    ... on AutomateUrlEncodePreprocessor {\n      ...automateUrlEncodePreprocessorFull\n    }\n  }\n}\n    \n\n    fragment automatePrefixPreprocessorFull on AutomatePrefixPreprocessor {\n  __typename\n  value\n}\n    \n\n    fragment automateSuffixPreprocessorFull on AutomateSuffixPreprocessor {\n  __typename\n  value\n}\n    \n\n    fragment automateWorkflowPreprocessorFull on AutomateWorkflowPreprocessor {\n  __typename\n  id\n}\n    \n\n    fragment automateUrlEncodePreprocessorFull on AutomateUrlEncodePreprocessor {\n  __typename\n  charset\n  nonAscii\n}\n    \n\n    fragment automatePlaceholderFull on AutomatePlaceholder {\n  __typename\n  start\n  end\n}\n    \n\n    fragment automateEntryRequestEdgeMeta on AutomateEntryRequestEdge {\n  __typename\n  node {\n    ...automateEntryRequestMeta\n  }\n  cursor\n}\n    \n\n    fragment automateEntryRequestMeta on AutomateEntryRequest {\n  __typename\n  sequenceId\n  automateEntryId\n  error\n  request {\n    ...requestMeta\n  }\n  payloads {\n    ...automateEntryRequestPayloadFull\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment automateEntryRequestPayloadFull on AutomateEntryRequestPayload {\n  __typename\n  position\n  raw\n}\n    ";
+export declare const AutomateEntryRequestsByOffsetDocument = "\n    query automateEntryRequestsByOffset($id: ID!, $limit: Int, $offset: Int, $order: AutomateEntryRequestOrderInput) {\n  automateEntry(id: $id) {\n    ...automateEntryFull\n    requestsByOffset(limit: $limit, offset: $offset, order: $order) {\n      snapshot\n      edges {\n        ...automateEntryRequestEdgeMeta\n      }\n    }\n  }\n}\n    \n    fragment automateEntryFull on AutomateEntry {\n  ...automateEntryMeta\n  settings {\n    ...automateSettingsFull\n  }\n}\n    \n\n    fragment automateEntryMeta on AutomateEntry {\n  __typename\n  id\n  name\n  createdAt\n  session {\n    id\n  }\n}\n    \n\n    fragment automateSettingsFull on AutomateSettings {\n  __typename\n  closeConnection\n  updateContentLength\n  strategy\n  concurrency {\n    ...concurrencySettingFull\n  }\n  retryOnFailure {\n    ...retryOnFailureSettingFull\n  }\n  payloads {\n    ...automatePayloadFull\n  }\n  placeholders {\n    ...automatePlaceholderFull\n  }\n}\n    \n\n    fragment concurrencySettingFull on AutomateConcurrencySetting {\n  __typename\n  delay\n  workers\n}\n    \n\n    fragment retryOnFailureSettingFull on AutomateRetryOnFailureSetting {\n  __typename\n  backoff\n  maximumRetries\n}\n    \n\n    fragment automatePayloadFull on AutomatePayload {\n  __typename\n  options {\n    ... on AutomateSimpleListPayload {\n      ...simpleListPayloadOptionsFull\n    }\n    ... on AutomateHostedFilePayload {\n      ...hostedFilePayloadOptionsFull\n    }\n    ... on AutomateNullPayload {\n      ...nullPayloadOptionsFull\n    }\n  }\n  preprocessors {\n    ...automatePreprocessorFull\n  }\n}\n    \n\n    fragment simpleListPayloadOptionsFull on AutomateSimpleListPayload {\n  __typename\n  list\n}\n    \n\n    fragment hostedFilePayloadOptionsFull on AutomateHostedFilePayload {\n  __typename\n  id\n  delimiter\n}\n    \n\n    fragment nullPayloadOptionsFull on AutomateNullPayload {\n  __typename\n  quantity\n}\n    \n\n    fragment automatePreprocessorFull on AutomatePreprocessor {\n  __typename\n  options {\n    ... on AutomatePrefixPreprocessor {\n      ...automatePrefixPreprocessorFull\n    }\n    ... on AutomateSuffixPreprocessor {\n      ...automateSuffixPreprocessorFull\n    }\n    ... on AutomateWorkflowPreprocessor {\n      ...automateWorkflowPreprocessorFull\n    }\n    ... on AutomateUrlEncodePreprocessor {\n      ...automateUrlEncodePreprocessorFull\n    }\n  }\n}\n    \n\n    fragment automatePrefixPreprocessorFull on AutomatePrefixPreprocessor {\n  __typename\n  value\n}\n    \n\n    fragment automateSuffixPreprocessorFull on AutomateSuffixPreprocessor {\n  __typename\n  value\n}\n    \n\n    fragment automateWorkflowPreprocessorFull on AutomateWorkflowPreprocessor {\n  __typename\n  id\n}\n    \n\n    fragment automateUrlEncodePreprocessorFull on AutomateUrlEncodePreprocessor {\n  __typename\n  charset\n  nonAscii\n}\n    \n\n    fragment automatePlaceholderFull on AutomatePlaceholder {\n  __typename\n  start\n  end\n}\n    \n\n    fragment automateEntryRequestEdgeMeta on AutomateEntryRequestEdge {\n  __typename\n  node {\n    ...automateEntryRequestMeta\n  }\n  cursor\n}\n    \n\n    fragment automateEntryRequestMeta on AutomateEntryRequest {\n  __typename\n  sequenceId\n  automateEntryId\n  error\n  request {\n    ...requestMeta\n  }\n  payloads {\n    ...automateEntryRequestPayloadFull\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment automateEntryRequestPayloadFull on AutomateEntryRequestPayload {\n  __typename\n  position\n  raw\n}\n    ";
+export declare const AutomateEntryRequestsCountDocument = "\n    query automateEntryRequestsCount($id: ID!) {\n  automateEntry(id: $id) {\n    ...automateEntryFull\n    requests(first: 0) {\n      count {\n        ...countFull\n      }\n    }\n  }\n}\n    \n    fragment automateEntryFull on AutomateEntry {\n  ...automateEntryMeta\n  settings {\n    ...automateSettingsFull\n  }\n}\n    \n\n    fragment automateEntryMeta on AutomateEntry {\n  __typename\n  id\n  name\n  createdAt\n  session {\n    id\n  }\n}\n    \n\n    fragment automateSettingsFull on AutomateSettings {\n  __typename\n  closeConnection\n  updateContentLength\n  strategy\n  concurrency {\n    ...concurrencySettingFull\n  }\n  retryOnFailure {\n    ...retryOnFailureSettingFull\n  }\n  payloads {\n    ...automatePayloadFull\n  }\n  placeholders {\n    ...automatePlaceholderFull\n  }\n}\n    \n\n    fragment concurrencySettingFull on AutomateConcurrencySetting {\n  __typename\n  delay\n  workers\n}\n    \n\n    fragment retryOnFailureSettingFull on AutomateRetryOnFailureSetting {\n  __typename\n  backoff\n  maximumRetries\n}\n    \n\n    fragment automatePayloadFull on AutomatePayload {\n  __typename\n  options {\n    ... on AutomateSimpleListPayload {\n      ...simpleListPayloadOptionsFull\n    }\n    ... on AutomateHostedFilePayload {\n      ...hostedFilePayloadOptionsFull\n    }\n    ... on AutomateNullPayload {\n      ...nullPayloadOptionsFull\n    }\n  }\n  preprocessors {\n    ...automatePreprocessorFull\n  }\n}\n    \n\n    fragment simpleListPayloadOptionsFull on AutomateSimpleListPayload {\n  __typename\n  list\n}\n    \n\n    fragment hostedFilePayloadOptionsFull on AutomateHostedFilePayload {\n  __typename\n  id\n  delimiter\n}\n    \n\n    fragment nullPayloadOptionsFull on AutomateNullPayload {\n  __typename\n  quantity\n}\n    \n\n    fragment automatePreprocessorFull on AutomatePreprocessor {\n  __typename\n  options {\n    ... on AutomatePrefixPreprocessor {\n      ...automatePrefixPreprocessorFull\n    }\n    ... on AutomateSuffixPreprocessor {\n      ...automateSuffixPreprocessorFull\n    }\n    ... on AutomateWorkflowPreprocessor {\n      ...automateWorkflowPreprocessorFull\n    }\n    ... on AutomateUrlEncodePreprocessor {\n      ...automateUrlEncodePreprocessorFull\n    }\n  }\n}\n    \n\n    fragment automatePrefixPreprocessorFull on AutomatePrefixPreprocessor {\n  __typename\n  value\n}\n    \n\n    fragment automateSuffixPreprocessorFull on AutomateSuffixPreprocessor {\n  __typename\n  value\n}\n    \n\n    fragment automateWorkflowPreprocessorFull on AutomateWorkflowPreprocessor {\n  __typename\n  id\n}\n    \n\n    fragment automateUrlEncodePreprocessorFull on AutomateUrlEncodePreprocessor {\n  __typename\n  charset\n  nonAscii\n}\n    \n\n    fragment automatePlaceholderFull on AutomatePlaceholder {\n  __typename\n  start\n  end\n}\n    \n\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
 export declare const AutomateSessionsDocument = "\n    query automateSessions {\n  automateSessions {\n    edges {\n      node {\n        ...automateSessionMeta\n      }\n    }\n  }\n}\n    \n    fragment automateSessionMeta on AutomateSession {\n  __typename\n  id\n  name\n  createdAt\n  entries {\n    ...automateEntryMeta\n  }\n}\n    \n\n    fragment automateEntryMeta on AutomateEntry {\n  __typename\n  id\n  name\n  createdAt\n  session {\n    id\n  }\n}\n    ";
-export declare const AutomateSessionDocument = "\n    query automateSession($id: ID!) {\n  automateSession(id: $id) {\n    ...automateSessionFull\n  }\n}\n    \n    fragment automateSessionFull on AutomateSession {\n  ...automateSessionMeta\n  connection {\n    ...connectionInfoFull\n  }\n  settings {\n    ...automateSettingsFull\n  }\n  raw\n}\n    \n\n    fragment automateSessionMeta on AutomateSession {\n  __typename\n  id\n  name\n  createdAt\n  entries {\n    ...automateEntryMeta\n  }\n}\n    \n\n    fragment automateEntryMeta on AutomateEntry {\n  __typename\n  id\n  name\n  createdAt\n  session {\n    id\n  }\n}\n    \n\n    fragment connectionInfoFull on ConnectionInfo {\n  __typename\n  host\n  port\n  isTls\n}\n    \n\n    fragment automateSettingsFull on AutomateSettings {\n  __typename\n  closeConnection\n  updateContentLength\n  strategy\n  concurrency {\n    ...concurrencySettingFull\n  }\n  retryOnFailure {\n    ...retryOnFailureSettingFull\n  }\n  payloads {\n    ...automatePayloadFull\n  }\n  placeholders {\n    ...automatePlaceholderFull\n  }\n}\n    \n\n    fragment concurrencySettingFull on AutomateConcurrencySetting {\n  __typename\n  delay\n  workers\n}\n    \n\n    fragment retryOnFailureSettingFull on AutomateRetryOnFailureSetting {\n  __typename\n  backoff\n  maximumRetries\n}\n    \n\n    fragment automatePayloadFull on AutomatePayload {\n  __typename\n  kind\n  options {\n    ... on AutomateSimpleListPayload {\n      ...simpleListPayloadOptionsFull\n    }\n    ... on AutomateHostedFilePayload {\n      ...hostedFilePayloadOptionsFull\n    }\n    ... on AutomateNullPayload {\n      ...nullPayloadOptionsFull\n    }\n  }\n  preprocessors {\n    __typename\n    kind\n    options {\n      ... on AutomatePrefixPreprocessor {\n        value\n      }\n      ... on AutomateSuffixPreprocessor {\n        value\n      }\n    }\n  }\n  urlEncode {\n    __typename\n    charset\n    enabled\n    nonAscii\n  }\n}\n    \n\n    fragment simpleListPayloadOptionsFull on AutomateSimpleListPayload {\n  __typename\n  list\n}\n    \n\n    fragment hostedFilePayloadOptionsFull on AutomateHostedFilePayload {\n  __typename\n  id\n  delimiter\n}\n    \n\n    fragment nullPayloadOptionsFull on AutomateNullPayload {\n  __typename\n  quantity\n}\n    \n\n    fragment automatePlaceholderFull on AutomatePlaceholder {\n  __typename\n  start\n  end\n}\n    ";
+export declare const AutomateSessionDocument = "\n    query automateSession($id: ID!) {\n  automateSession(id: $id) {\n    ...automateSessionFull\n  }\n}\n    \n    fragment automateSessionFull on AutomateSession {\n  ...automateSessionMeta\n  connection {\n    ...connectionInfoFull\n  }\n  settings {\n    ...automateSettingsFull\n  }\n  raw\n}\n    \n\n    fragment automateSessionMeta on AutomateSession {\n  __typename\n  id\n  name\n  createdAt\n  entries {\n    ...automateEntryMeta\n  }\n}\n    \n\n    fragment automateEntryMeta on AutomateEntry {\n  __typename\n  id\n  name\n  createdAt\n  session {\n    id\n  }\n}\n    \n\n    fragment connectionInfoFull on ConnectionInfo {\n  __typename\n  host\n  port\n  isTls\n}\n    \n\n    fragment automateSettingsFull on AutomateSettings {\n  __typename\n  closeConnection\n  updateContentLength\n  strategy\n  concurrency {\n    ...concurrencySettingFull\n  }\n  retryOnFailure {\n    ...retryOnFailureSettingFull\n  }\n  payloads {\n    ...automatePayloadFull\n  }\n  placeholders {\n    ...automatePlaceholderFull\n  }\n}\n    \n\n    fragment concurrencySettingFull on AutomateConcurrencySetting {\n  __typename\n  delay\n  workers\n}\n    \n\n    fragment retryOnFailureSettingFull on AutomateRetryOnFailureSetting {\n  __typename\n  backoff\n  maximumRetries\n}\n    \n\n    fragment automatePayloadFull on AutomatePayload {\n  __typename\n  options {\n    ... on AutomateSimpleListPayload {\n      ...simpleListPayloadOptionsFull\n    }\n    ... on AutomateHostedFilePayload {\n      ...hostedFilePayloadOptionsFull\n    }\n    ... on AutomateNullPayload {\n      ...nullPayloadOptionsFull\n    }\n  }\n  preprocessors {\n    ...automatePreprocessorFull\n  }\n}\n    \n\n    fragment simpleListPayloadOptionsFull on AutomateSimpleListPayload {\n  __typename\n  list\n}\n    \n\n    fragment hostedFilePayloadOptionsFull on AutomateHostedFilePayload {\n  __typename\n  id\n  delimiter\n}\n    \n\n    fragment nullPayloadOptionsFull on AutomateNullPayload {\n  __typename\n  quantity\n}\n    \n\n    fragment automatePreprocessorFull on AutomatePreprocessor {\n  __typename\n  options {\n    ... on AutomatePrefixPreprocessor {\n      ...automatePrefixPreprocessorFull\n    }\n    ... on AutomateSuffixPreprocessor {\n      ...automateSuffixPreprocessorFull\n    }\n    ... on AutomateWorkflowPreprocessor {\n      ...automateWorkflowPreprocessorFull\n    }\n    ... on AutomateUrlEncodePreprocessor {\n      ...automateUrlEncodePreprocessorFull\n    }\n  }\n}\n    \n\n    fragment automatePrefixPreprocessorFull on AutomatePrefixPreprocessor {\n  __typename\n  value\n}\n    \n\n    fragment automateSuffixPreprocessorFull on AutomateSuffixPreprocessor {\n  __typename\n  value\n}\n    \n\n    fragment automateWorkflowPreprocessorFull on AutomateWorkflowPreprocessor {\n  __typename\n  id\n}\n    \n\n    fragment automateUrlEncodePreprocessorFull on AutomateUrlEncodePreprocessor {\n  __typename\n  charset\n  nonAscii\n}\n    \n\n    fragment automatePlaceholderFull on AutomatePlaceholder {\n  __typename\n  start\n  end\n}\n    ";
 export declare const AutomateTasksDocument = "\n    query automateTasks($after: String, $before: String, $first: Int, $last: Int) {\n  automateTasks(after: $after, before: $before, first: $first, last: $last) {\n    edges {\n      node {\n        ...automateTaskMeta\n      }\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n  }\n}\n    \n    fragment automateTaskMeta on AutomateTask {\n  id\n  paused\n  entry {\n    ...automateEntryMeta\n  }\n}\n    \n\n    fragment automateEntryMeta on AutomateEntry {\n  __typename\n  id\n  name\n  createdAt\n  session {\n    id\n  }\n}\n    \n\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    ";
 export declare const BackupsDocument = "\n    query backups {\n  backups {\n    ...backupMeta\n  }\n}\n    \n    fragment backupMeta on Backup {\n  __typename\n  id\n  name\n  path\n  size\n  status\n  createdAt\n  updatedAt\n  project {\n    id\n  }\n}\n    ";
 export declare const BackupUriDocument = "\n    query backupUri($id: ID!) {\n  backup(id: $id) {\n    downloadUri\n  }\n}\n    ";
@@ -12357,13 +12885,14 @@ export declare const InterceptEntriesByOffsetDocument = "\n    query interceptEn
 export declare const InterceptEntryDocument = "\n    query interceptEntry($id: ID!) {\n  interceptEntry(id: $id) {\n    ...interceptEntryFull\n  }\n}\n    \n    fragment interceptEntryFull on InterceptEntry {\n  ...interceptEntryMeta\n  request {\n    ...requestFull\n  }\n}\n    \n\n    fragment interceptEntryMeta on InterceptEntry {\n  __typename\n  id\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment requestFull on Request {\n  ...requestFullFields\n}\n    \n\n    fragment requestFullFields on Request {\n  ...requestMeta\n  raw\n  edits {\n    ...requestMeta\n  }\n}\n    ";
 export declare const InterceptEntryCountDocument = "\n    query interceptEntryCount($filter: FilterClauseInterceptEntryInput, $scopeId: ID) {\n  interceptEntries(first: 0, filter: $filter, scopeId: $scopeId) {\n    count {\n      ...countFull\n    }\n  }\n}\n    \n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
 export declare const UpstreamProxiesDocument = "\n    query upstreamProxies {\n  upstreamProxies {\n    ...upstreamProxyFull\n  }\n}\n    \n    fragment upstreamProxyFull on UpstreamProxy {\n  __typename\n  id\n  allowlist\n  denylist\n  auth {\n    ... on UpstreamProxyAuthBasic {\n      ...upstreamProxyAuthBasicFull\n    }\n  }\n  enabled\n  host\n  kind\n  port\n  rank\n}\n    \n\n    fragment upstreamProxyAuthBasicFull on UpstreamProxyAuthBasic {\n  __typename\n  username\n  password\n}\n    ";
+export declare const PluginPackagesDocument = "\n    query pluginPackages {\n  pluginPackages {\n    ...pluginPackageFull\n  }\n}\n    \n    fragment pluginPackageFull on PluginPackage {\n  ...pluginPackageMeta\n  plugins {\n    ... on PluginFrontend {\n      ...pluginFrontendFull\n    }\n  }\n}\n    \n\n    fragment pluginPackageMeta on PluginPackage {\n  id\n  name\n  description\n  author {\n    ...pluginAuthorFull\n  }\n  version\n  installedAt\n  manifestId\n}\n    \n\n    fragment pluginAuthorFull on PluginAuthor {\n  name\n  email\n  url\n}\n    \n\n    fragment pluginFrontendFull on PluginFrontend {\n  ...pluginFrontendMeta\n  data\n}\n    \n\n    fragment pluginFrontendMeta on PluginFrontend {\n  ...pluginMeta\n  entrypoint\n  style\n}\n    \n\n    fragment pluginMeta on Plugin {\n  __typename\n  id\n  name\n  enabled\n  manifestId\n  package {\n    id\n  }\n}\n    ";
 export declare const CurrentProjectDocument = "\n    query currentProject {\n  currentProject {\n    ...projectFull\n  }\n}\n    \n    fragment projectFull on Project {\n  __typename\n  id\n  name\n  path\n  version\n  status\n  size\n  createdAt\n  updatedAt\n  backups {\n    id\n  }\n}\n    ";
 export declare const ProjectsDocument = "\n    query projects {\n  projects {\n    ...projectFull\n  }\n}\n    \n    fragment projectFull on Project {\n  __typename\n  id\n  name\n  path\n  version\n  status\n  size\n  createdAt\n  updatedAt\n  backups {\n    id\n  }\n}\n    ";
 export declare const ReplayEntryDocument = "\n    query replayEntry($id: ID!) {\n  replayEntry(id: $id) {\n    ...replayEntryMeta\n  }\n}\n    \n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    ";
-export declare const ActiveReplayEntryBySessionDocument = "\n    query activeReplayEntryBySession($sessionId: ID!) {\n  replaySession(id: $sessionId) {\n    ...replaySessionMeta\n    activeEntry {\n      ...replayEntryMeta\n    }\n  }\n}\n    \n    fragment replaySessionMeta on ReplaySession {\n  __typename\n  id\n  name\n  activeEntry {\n    ...replayEntryMeta\n  }\n  collection {\n    id\n  }\n  entries {\n    edges {\n      cursor\n      node {\n        ...replayEntryMeta\n      }\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n    count {\n      ...countFull\n    }\n  }\n}\n    \n\n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    \n\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
-export declare const ReplayEntriesBySessionDocument = "\n    query replayEntriesBySession($sessionId: ID!) {\n  replaySession(id: $sessionId) {\n    ...replaySessionMeta\n    entries {\n      edges {\n        cursor\n        node {\n          ...replayEntryMeta\n        }\n      }\n      pageInfo {\n        ...pageInfoFull\n      }\n      count {\n        ...countFull\n      }\n    }\n  }\n}\n    \n    fragment replaySessionMeta on ReplaySession {\n  __typename\n  id\n  name\n  activeEntry {\n    ...replayEntryMeta\n  }\n  collection {\n    id\n  }\n  entries {\n    edges {\n      cursor\n      node {\n        ...replayEntryMeta\n      }\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n    count {\n      ...countFull\n    }\n  }\n}\n    \n\n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    \n\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
+export declare const ActiveReplayEntryBySessionDocument = "\n    query activeReplayEntryBySession($sessionId: ID!) {\n  replaySession(id: $sessionId) {\n    ...replaySessionMeta\n    activeEntry {\n      ...replayEntryMeta\n    }\n  }\n}\n    \n    fragment replaySessionMeta on ReplaySession {\n  __typename\n  id\n  name\n  activeEntry {\n    ...replayEntryMeta\n  }\n  collection {\n    id\n  }\n  entries {\n    nodes {\n      ...replayEntryMeta\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n    count {\n      ...countFull\n    }\n  }\n}\n    \n\n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    \n\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
+export declare const ReplayEntriesBySessionDocument = "\n    query replayEntriesBySession($sessionId: ID!) {\n  replaySession(id: $sessionId) {\n    ...replaySessionMeta\n    entries {\n      edges {\n        cursor\n        node {\n          ...replayEntryMeta\n        }\n      }\n      pageInfo {\n        ...pageInfoFull\n      }\n      count {\n        ...countFull\n      }\n    }\n  }\n}\n    \n    fragment replaySessionMeta on ReplaySession {\n  __typename\n  id\n  name\n  activeEntry {\n    ...replayEntryMeta\n  }\n  collection {\n    id\n  }\n  entries {\n    nodes {\n      ...replayEntryMeta\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n    count {\n      ...countFull\n    }\n  }\n}\n    \n\n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    \n\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
 export declare const ReplaySessionEntriesDocument = "\n    query replaySessionEntries($id: ID!) {\n  replaySession(id: $id) {\n    activeEntry {\n      ...replayEntryMeta\n    }\n    entries {\n      edges {\n        cursor\n        node {\n          ...replayEntryMeta\n        }\n      }\n      pageInfo {\n        ...pageInfoFull\n      }\n      count {\n        ...countFull\n      }\n    }\n  }\n}\n    \n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    \n\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
-export declare const ReplaySessionCollectionsDocument = "\n    query replaySessionCollections {\n  replaySessionCollections {\n    edges {\n      node {\n        ...replaySessionCollectionMeta\n      }\n    }\n  }\n}\n    \n    fragment replaySessionCollectionMeta on ReplaySessionCollection {\n  __typename\n  id\n  name\n  sessions {\n    ...replaySessionMeta\n  }\n}\n    \n\n    fragment replaySessionMeta on ReplaySession {\n  __typename\n  id\n  name\n  activeEntry {\n    ...replayEntryMeta\n  }\n  collection {\n    id\n  }\n  entries {\n    edges {\n      cursor\n      node {\n        ...replayEntryMeta\n      }\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n    count {\n      ...countFull\n    }\n  }\n}\n    \n\n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    \n\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
+export declare const ReplaySessionCollectionsDocument = "\n    query replaySessionCollections {\n  replaySessionCollections {\n    edges {\n      node {\n        ...replaySessionCollectionMeta\n      }\n    }\n  }\n}\n    \n    fragment replaySessionCollectionMeta on ReplaySessionCollection {\n  __typename\n  id\n  name\n  sessions {\n    ...replaySessionMeta\n  }\n}\n    \n\n    fragment replaySessionMeta on ReplaySession {\n  __typename\n  id\n  name\n  activeEntry {\n    ...replayEntryMeta\n  }\n  collection {\n    id\n  }\n  entries {\n    nodes {\n      ...replayEntryMeta\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n    count {\n      ...countFull\n    }\n  }\n}\n    \n\n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    \n\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
 export declare const RequestsDocument = "\n    query requests($after: String, $before: String, $first: Int, $last: Int, $order: RequestResponseOrderInput, $scopeId: ID, $filter: FilterClauseRequestResponseInput) {\n  requests(\n    after: $after\n    before: $before\n    first: $first\n    last: $last\n    order: $order\n    scopeId: $scopeId\n    filter: $filter\n  ) {\n    edges {\n      ...requestEdgeMeta\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n    snapshot\n  }\n}\n    \n    fragment requestEdgeMeta on RequestEdge {\n  __typename\n  cursor\n  node {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    ";
 export declare const RequestCountDocument = "\n    query requestCount($scopeId: ID, $filter: FilterClauseRequestResponseInput) {\n  requests(first: 0, scopeId: $scopeId, filter: $filter) {\n    count {\n      ...countFull\n    }\n    snapshot\n  }\n}\n    \n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
 export declare const RequestDocument = "\n    query request($id: ID!) {\n  request(id: $id) {\n    ...requestFull\n  }\n}\n    \n    fragment requestFull on Request {\n  ...requestFullFields\n}\n    \n\n    fragment requestFullFields on Request {\n  ...requestMeta\n  raw\n  edits {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    ";
@@ -12427,10 +12956,13 @@ export declare const DeletedInterceptEntryDocument = "\n    subscription deleted
 export declare const StartedDeleteInterceptEntriesTaskDocument = "\n    subscription startedDeleteInterceptEntriesTask {\n  startedDeleteInterceptEntriesTask {\n    task {\n      ...deleteInterceptEntriesTaskFull\n    }\n  }\n}\n    \n    fragment deleteInterceptEntriesTaskFull on DeleteInterceptEntriesTask {\n  __typename\n  id\n  deletedEntryIds\n}\n    ";
 export declare const UpdatedDeleteInterceptEntriesTaskDocument = "\n    subscription updatedDeleteInterceptEntriesTask {\n  updatedDeleteInterceptEntriesTask {\n    snapshot\n    task {\n      ...deleteInterceptEntriesTaskFull\n    }\n  }\n}\n    \n    fragment deleteInterceptEntriesTaskFull on DeleteInterceptEntriesTask {\n  __typename\n  id\n  deletedEntryIds\n}\n    ";
 export declare const FinishedDeleteInterceptEntriesTaskDocument = "\n    subscription finishedDeleteInterceptEntriesTask {\n  finishedDeleteInterceptEntriesTask {\n    task {\n      ...deleteInterceptEntriesTaskFull\n    }\n    error {\n      ... on InternalUserError {\n        ...internalUserErrorFull\n      }\n      ... on OtherUserError {\n        ...otherUserErrorFull\n      }\n    }\n  }\n}\n    \n    fragment deleteInterceptEntriesTaskFull on DeleteInterceptEntriesTask {\n  __typename\n  id\n  deletedEntryIds\n}\n    \n\n    fragment internalUserErrorFull on InternalUserError {\n  ...userErrorFull\n  message\n}\n    \n\n    fragment userErrorFull on UserError {\n  __typename\n  code\n}\n    \n\n    fragment otherUserErrorFull on OtherUserError {\n  ...userErrorFull\n}\n    ";
+export declare const CreatedPluginPackageDocument = "\n    subscription createdPluginPackage {\n  createdPluginPackage {\n    package {\n      ...pluginPackageFull\n    }\n  }\n}\n    \n    fragment pluginPackageFull on PluginPackage {\n  ...pluginPackageMeta\n  plugins {\n    ... on PluginFrontend {\n      ...pluginFrontendFull\n    }\n  }\n}\n    \n\n    fragment pluginPackageMeta on PluginPackage {\n  id\n  name\n  description\n  author {\n    ...pluginAuthorFull\n  }\n  version\n  installedAt\n  manifestId\n}\n    \n\n    fragment pluginAuthorFull on PluginAuthor {\n  name\n  email\n  url\n}\n    \n\n    fragment pluginFrontendFull on PluginFrontend {\n  ...pluginFrontendMeta\n  data\n}\n    \n\n    fragment pluginFrontendMeta on PluginFrontend {\n  ...pluginMeta\n  entrypoint\n  style\n}\n    \n\n    fragment pluginMeta on Plugin {\n  __typename\n  id\n  name\n  enabled\n  manifestId\n  package {\n    id\n  }\n}\n    ";
+export declare const DeletedPluginPackageDocument = "\n    subscription deletedPluginPackage {\n  deletedPluginPackage {\n    deletedPackageId\n  }\n}\n    ";
+export declare const UpdatedPluginDocument = "\n    subscription updatedPlugin {\n  updatedPlugin {\n    plugin {\n      ... on PluginFrontend {\n        ...pluginFrontendFull\n      }\n    }\n  }\n}\n    \n    fragment pluginFrontendFull on PluginFrontend {\n  ...pluginFrontendMeta\n  data\n}\n    \n\n    fragment pluginFrontendMeta on PluginFrontend {\n  ...pluginMeta\n  entrypoint\n  style\n}\n    \n\n    fragment pluginMeta on Plugin {\n  __typename\n  id\n  name\n  enabled\n  manifestId\n  package {\n    id\n  }\n}\n    ";
 export declare const CreatedProjectDocument = "\n    subscription createdProject {\n  createdProject {\n    project {\n      ...projectFull\n    }\n  }\n}\n    \n    fragment projectFull on Project {\n  __typename\n  id\n  name\n  path\n  version\n  status\n  size\n  createdAt\n  updatedAt\n  backups {\n    id\n  }\n}\n    ";
 export declare const UpdatedProjectDocument = "\n    subscription updatedProject {\n  updatedProject {\n    project {\n      ...projectFull\n    }\n  }\n}\n    \n    fragment projectFull on Project {\n  __typename\n  id\n  name\n  path\n  version\n  status\n  size\n  createdAt\n  updatedAt\n  backups {\n    id\n  }\n}\n    ";
 export declare const DeletedProjectDocument = "\n    subscription deletedProject {\n  deletedProject {\n    deletedProjectId\n  }\n}\n    ";
-export declare const UpdatedReplaySessionDocument = "\n    subscription updatedReplaySession {\n  updatedReplaySession {\n    sessionEdge {\n      node {\n        ...replaySessionMeta\n      }\n    }\n    snapshot\n  }\n}\n    \n    fragment replaySessionMeta on ReplaySession {\n  __typename\n  id\n  name\n  activeEntry {\n    ...replayEntryMeta\n  }\n  collection {\n    id\n  }\n  entries {\n    edges {\n      cursor\n      node {\n        ...replayEntryMeta\n      }\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n    count {\n      ...countFull\n    }\n  }\n}\n    \n\n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    \n\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
+export declare const UpdatedReplaySessionDocument = "\n    subscription updatedReplaySession {\n  updatedReplaySession {\n    sessionEdge {\n      node {\n        ...replaySessionMeta\n      }\n    }\n    snapshot\n  }\n}\n    \n    fragment replaySessionMeta on ReplaySession {\n  __typename\n  id\n  name\n  activeEntry {\n    ...replayEntryMeta\n  }\n  collection {\n    id\n  }\n  entries {\n    nodes {\n      ...replayEntryMeta\n    }\n    pageInfo {\n      ...pageInfoFull\n    }\n    count {\n      ...countFull\n    }\n  }\n}\n    \n\n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    \n\n    fragment pageInfoFull on PageInfo {\n  __typename\n  hasPreviousPage\n  hasNextPage\n  startCursor\n  endCursor\n}\n    \n\n    fragment countFull on Count {\n  __typename\n  value\n  snapshot\n}\n    ";
 export declare const UpdatedReplayTaskDocument = "\n    subscription updatedReplayTask {\n  updatedReplayTask {\n    replayTaskEdge {\n      ...replayTaskEdgeMeta\n    }\n    snapshot\n  }\n}\n    \n    fragment replayTaskEdgeMeta on ReplayTaskEdge {\n  __typename\n  node {\n    ...replayTaskMeta\n  }\n  cursor\n}\n    \n\n    fragment replayTaskMeta on ReplayTask {\n  __typename\n  id\n  error\n  replayEntry {\n    ...replayEntryMeta\n  }\n}\n    \n\n    fragment replayEntryMeta on ReplayEntry {\n  __typename\n  id\n  error\n  sessionId\n  request {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    ";
 export declare const CreatedRequestDocument = "\n    subscription createdRequest($order: RequestResponseOrderInput, $scopeId: ID, $filter: FilterClauseRequestResponseInput) {\n  createdRequest(scopeId: $scopeId, filter: $filter) {\n    requestEdge(order: $order) {\n      ...requestEdgeMeta\n    }\n    snapshot\n  }\n}\n    \n    fragment requestEdgeMeta on RequestEdge {\n  __typename\n  cursor\n  node {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    ";
 export declare const UpdatedRequestDocument = "\n    subscription updatedRequest($order: RequestResponseOrderInput, $scopeId: ID, $filter: FilterClauseRequestResponseInput) {\n  updatedRequest(scopeId: $scopeId, filter: $filter) {\n    requestEdge(order: $order) {\n      ...requestEdgeMeta\n    }\n    snapshot\n  }\n}\n    \n    fragment requestEdgeMeta on RequestEdge {\n  __typename\n  cursor\n  node {\n    ...requestMeta\n  }\n}\n    \n\n    fragment requestMeta on Request {\n  __typename\n  id\n  host\n  port\n  path\n  query\n  method\n  edited\n  isTls\n  length\n  alteration\n  metadata {\n    ...requestMetadataFull\n  }\n  fileExtension\n  source\n  createdAt\n  response {\n    ...responseMeta\n  }\n}\n    \n\n    fragment requestMetadataFull on RequestMetadata {\n  __typename\n  id\n  color\n}\n    \n\n    fragment responseMeta on Response {\n  __typename\n  id\n  statusCode\n  roundtripTime\n  length\n  createdAt\n  alteration\n  edited\n}\n    ";
@@ -12498,6 +13030,10 @@ export declare function getSdk<C>(requester: Requester<C>): {
     deleteUpstreamProxy(variables: DeleteUpstreamProxyMutationVariables, options?: C): Promise<DeleteUpstreamProxyMutation>;
     testUpstreamProxy(variables: TestUpstreamProxyMutationVariables, options?: C): Promise<TestUpstreamProxyMutation>;
     rankUpstreamProxy(variables: RankUpstreamProxyMutationVariables, options?: C): Promise<RankUpstreamProxyMutation>;
+    installPluginPackage(variables: InstallPluginPackageMutationVariables, options?: C): Promise<InstallPluginPackageMutation>;
+    uninstallPluginPackage(variables: UninstallPluginPackageMutationVariables, options?: C): Promise<UninstallPluginPackageMutation>;
+    togglePlugin(variables: TogglePluginMutationVariables, options?: C): Promise<TogglePluginMutation>;
+    setPluginData(variables: SetPluginDataMutationVariables, options?: C): Promise<SetPluginDataMutation>;
     createProject(variables: CreateProjectMutationVariables, options?: C): Promise<CreateProjectMutation>;
     selectProject(variables: SelectProjectMutationVariables, options?: C): Promise<SelectProjectMutation>;
     deleteProject(variables: DeleteProjectMutationVariables, options?: C): Promise<DeleteProjectMutation>;
@@ -12539,6 +13075,7 @@ export declare function getSdk<C>(requester: Requester<C>): {
     runConvertWorkflow(variables: RunConvertWorkflowMutationVariables, options?: C): Promise<RunConvertWorkflowMutation>;
     runActiveWorkflow(variables: RunActiveWorkflowMutationVariables, options?: C): Promise<RunActiveWorkflowMutation>;
     globalizeWorkflow(variables: GlobalizeWorkflowMutationVariables, options?: C): Promise<GlobalizeWorkflowMutation>;
+    localizeWorkflow(variables: LocalizeWorkflowMutationVariables, options?: C): Promise<LocalizeWorkflowMutation>;
     assistantModels(variables?: AssistantModelsQueryVariables, options?: C): Promise<AssistantModelsQuery>;
     assistantSessions(variables?: AssistantSessionsQueryVariables, options?: C): Promise<AssistantSessionsQuery>;
     assistantSession(variables: AssistantSessionQueryVariables, options?: C): Promise<AssistantSessionQuery>;
@@ -12576,6 +13113,7 @@ export declare function getSdk<C>(requester: Requester<C>): {
     interceptEntry(variables: InterceptEntryQueryVariables, options?: C): Promise<InterceptEntryQuery>;
     interceptEntryCount(variables?: InterceptEntryCountQueryVariables, options?: C): Promise<InterceptEntryCountQuery>;
     upstreamProxies(variables?: UpstreamProxiesQueryVariables, options?: C): Promise<UpstreamProxiesQuery>;
+    pluginPackages(variables?: PluginPackagesQueryVariables, options?: C): Promise<PluginPackagesQuery>;
     currentProject(variables?: CurrentProjectQueryVariables, options?: C): Promise<CurrentProjectQuery>;
     projects(variables?: ProjectsQueryVariables, options?: C): Promise<ProjectsQuery>;
     replayEntry(variables: ReplayEntryQueryVariables, options?: C): Promise<ReplayEntryQuery>;
@@ -12646,6 +13184,9 @@ export declare function getSdk<C>(requester: Requester<C>): {
     startedDeleteInterceptEntriesTask(variables?: StartedDeleteInterceptEntriesTaskSubscriptionVariables, options?: C): AsyncIterable<StartedDeleteInterceptEntriesTaskSubscription>;
     updatedDeleteInterceptEntriesTask(variables?: UpdatedDeleteInterceptEntriesTaskSubscriptionVariables, options?: C): AsyncIterable<UpdatedDeleteInterceptEntriesTaskSubscription>;
     finishedDeleteInterceptEntriesTask(variables?: FinishedDeleteInterceptEntriesTaskSubscriptionVariables, options?: C): AsyncIterable<FinishedDeleteInterceptEntriesTaskSubscription>;
+    createdPluginPackage(variables?: CreatedPluginPackageSubscriptionVariables, options?: C): AsyncIterable<CreatedPluginPackageSubscription>;
+    deletedPluginPackage(variables?: DeletedPluginPackageSubscriptionVariables, options?: C): AsyncIterable<DeletedPluginPackageSubscription>;
+    updatedPlugin(variables?: UpdatedPluginSubscriptionVariables, options?: C): AsyncIterable<UpdatedPluginSubscription>;
     createdProject(variables?: CreatedProjectSubscriptionVariables, options?: C): AsyncIterable<CreatedProjectSubscription>;
     updatedProject(variables?: UpdatedProjectSubscriptionVariables, options?: C): AsyncIterable<UpdatedProjectSubscription>;
     deletedProject(variables?: DeletedProjectSubscriptionVariables, options?: C): AsyncIterable<DeletedProjectSubscription>;
