@@ -21,5 +21,35 @@ type CommandContextRequestRow = {
         isTls: boolean;
     }[];
 };
-export type CommandContext = CommandContextBase | CommandContextRequestRow;
+type CommandContextRequest = {
+    type: "RequestContext";
+    request: {
+        host: string;
+        port: number;
+        path: string;
+        query: string;
+        isTls: boolean;
+        raw: string;
+    };
+    selection: string;
+};
+type CommandContextResponse = {
+    type: "ResponseContext";
+    request: {
+        id: string;
+        host: string;
+        port: number;
+        path: string;
+        query: string;
+        isTls: boolean;
+    };
+    response: {
+        id: string;
+        raw: string;
+        statusCode: number;
+        roundtripTime: number;
+    };
+    selection: string;
+};
+export type CommandContext = CommandContextBase | CommandContextRequestRow | CommandContextRequest | CommandContextResponse;
 export {};
