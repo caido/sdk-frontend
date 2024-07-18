@@ -1,5 +1,7 @@
 import type { Sdk } from "./__generated__/graphql-sdk";
+import type { BackendAPI, ToBackendRPC } from "./backend";
 import type { Commands } from "./commands";
+import type { Findings } from "./findings";
 import type { Menu } from "./menu";
 import type { Navigation } from "./navigation";
 import type { Scopes } from "./scopes";
@@ -7,9 +9,11 @@ import type { Storage } from "./storage";
 import type { UI } from "./ui";
 import type { Window } from "./window";
 export type { CommandContext } from "./commands";
-export type API = {
+export type API<T extends BackendAPI = Record<string, never>> = {
     ui: UI;
+    backend: ToBackendRPC<T>;
     scopes: Scopes;
+    findings: Findings;
     commands: Commands;
     menu: Menu;
     navigation: Navigation;
